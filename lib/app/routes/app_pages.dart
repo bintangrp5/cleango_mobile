@@ -1,3 +1,5 @@
+// ignore_for_file: constant_identifier_names
+
 import 'package:get/get.dart';
 
 import '../modules/admin_dashboard/bindings/admin_dashboard_binding.dart';
@@ -20,6 +22,10 @@ import '../modules/service_detail/bindings/service_detail_binding.dart';
 import '../modules/service_detail/views/service_detail_view.dart';
 import '../modules/services/bindings/services_binding.dart';
 import '../modules/services/views/services_view.dart';
+import '../modules/order_history/bindings/order_history_binding.dart';
+import '../modules/order_history/views/order_history_view.dart';
+import '../modules/edit_profile/bindings/edit_profile_binding.dart';
+import '../modules/edit_profile/views/edit_profile_view.dart';
 
 part 'app_routes.dart';
 
@@ -78,6 +84,16 @@ class AppPages {
       name: _Paths.SERVICES,
       page: () => const ServicesView(),
       binding: ServicesBinding(),
+    ),
+    GetPage(
+      name: _Paths.ORDER_HISTORY,
+      page: () => const OrderHistoryView(),
+      binding: OrderHistoryBinding(),
+    ),
+    GetPage(
+      name: _Paths.EDIT_PROFILE,
+      page: () => const EditProfileView(),
+      binding: EditProfileBinding(),
     ),
   ];
 }

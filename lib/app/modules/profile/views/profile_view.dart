@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../controllers/profile_controller.dart';
+import '../../../routes/app_pages.dart';
 
 class ProfileView extends GetView<ProfileController> {
   const ProfileView({super.key});
@@ -56,10 +57,14 @@ class ProfileView extends GetView<ProfileController> {
                   shape: BoxShape.circle,
                   border: Border.all(color: Colors.white, width: 4),
                 ),
-                child: const CircleAvatar(
+                child: Obx(() => CircleAvatar(
                   radius: 50,
-                  backgroundImage: NetworkImage('https://ui-avatars.com/api/?name=User&background=fff&color=0058BC&size=128'),
-                ),
+                  backgroundColor: Colors.white,
+                  child: Text(
+                    controller.authService.userInitials,
+                    style: const TextStyle(color: Color(0xFF0058BC), fontSize: 36, fontWeight: FontWeight.bold),
+                  ),
+                )),
               ),
               Positioned(
                 bottom: 0,
@@ -115,12 +120,12 @@ class ProfileView extends GetView<ProfileController> {
           _buildMenuItem(
             icon: Icons.person_outline,
             title: 'Edit Profil',
-            onTap: () => Get.snackbar('Info', 'Fitur Edit Profil belum tersedia'),
+            onTap: () => Get.toNamed(Routes.EDIT_PROFILE),
           ),
           _buildMenuItem(
-            icon: Icons.location_on_outlined,
-            title: 'Alamat Tersimpan',
-            onTap: () => Get.snackbar('Info', 'Fitur Alamat belum tersedia'),
+            icon: Icons.history,
+            title: 'Riwayat Pesanan',
+            onTap: () => Get.toNamed(Routes.ORDER_HISTORY),
           ),
           _buildMenuItem(
             icon: Icons.lock_outline,
@@ -137,11 +142,7 @@ class ProfileView extends GetView<ProfileController> {
             ),
           ),
           const SizedBox(height: 16),
-          _buildMenuItem(
-            icon: Icons.notifications_outlined,
-            title: 'Notifikasi',
-            onTap: () => Get.snackbar('Info', 'Fitur Notifikasi belum tersedia'),
-          ),
+
           _buildMenuItem(
             icon: Icons.help_outline,
             title: 'Pusat Bantuan',

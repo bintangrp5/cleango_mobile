@@ -56,7 +56,7 @@ class RegisterView extends GetView<RegisterController> {
                   // Name Input
                   _buildTextField(
                     label: 'Nama Lengkap',
-                    hint: 'Budi Santoso',
+                    hint: 'Nama Lengkap',
                     icon: Icons.person_outline,
                     controller: controller.nameController,
                   ),
@@ -64,8 +64,8 @@ class RegisterView extends GetView<RegisterController> {
 
                   // Email Input
                   _buildTextField(
-                    label: 'Alamat Email',
-                    hint: 'halo@contoh.com',
+                    label: 'Email',
+                    hint: 'nama@gmail.com',
                     icon: Icons.mail_outline,
                     controller: controller.emailController,
                     keyboardType: TextInputType.emailAddress,
@@ -73,7 +73,11 @@ class RegisterView extends GetView<RegisterController> {
                   const SizedBox(height: 20),
 
                   // Password Input
-                  _buildPasswordField(controller),
+                  _buildPasswordField('Kata Sandi', controller.passwordController),
+                  const SizedBox(height: 20),
+                  
+                  // Confirm Password Input
+                  _buildPasswordField('Konfirmasi Kata Sandi', controller.confirmPasswordController),
                   const SizedBox(height: 32),
 
                   // Action Button
@@ -181,17 +185,17 @@ class RegisterView extends GetView<RegisterController> {
     );
   }
 
-  Widget _buildPasswordField(RegisterController controller) {
+  Widget _buildPasswordField(String label, TextEditingController textController) {
     final isObscure = true.obs;
     
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Padding(
-          padding: EdgeInsets.only(left: 4, bottom: 8),
+        Padding(
+          padding: const EdgeInsets.only(left: 4, bottom: 8),
           child: Text(
-            'Kata Sandi',
-            style: TextStyle(
+            label,
+            style: const TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w600,
               color: Color(0xFF414755),
@@ -199,7 +203,7 @@ class RegisterView extends GetView<RegisterController> {
           ),
         ),
         Obx(() => TextField(
-          controller: controller.passwordController,
+          controller: textController,
           obscureText: isObscure.value,
           style: const TextStyle(fontSize: 16, color: Color(0xFF0B1C30)),
           decoration: InputDecoration(

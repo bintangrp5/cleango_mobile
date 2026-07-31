@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:intl/intl.dart';
+import '../../cart/controllers/cart_controller.dart';
 import '../controllers/checkout_controller.dart';
 
 class CheckoutView extends GetView<CheckoutController> {
@@ -40,40 +42,27 @@ class CheckoutView extends GetView<CheckoutController> {
         icon: const Icon(Icons.arrow_back, color: Color(0xFF0058BC)),
         onPressed: () => Get.back(),
       ),
-      title: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Image.asset(
-            'assets/images/logo.png',
-            height: 24,
-            width: 24,
-            errorBuilder: (context, error, stackTrace) => const Icon(
-              Icons.local_laundry_service,
-              color: Color(0xFF0058BC),
-              size: 24,
-            ),
-          ),
-          const SizedBox(width: 8),
-          const Text(
-            'Checkout',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: Color(0xFF0B1C30),
-            ),
-          ),
-        ],
+      title: const Text(
+        'Checkout',
+        style: TextStyle(
+          fontSize: 18,
+          fontWeight: FontWeight.bold,
+          color: Color(0xFF0B1C30),
+        ),
       ),
       centerTitle: true,
       actions: [
-        Padding(
+        Obx(() => Padding(
           padding: const EdgeInsets.only(right: 20.0),
           child: CircleAvatar(
             radius: 16,
-            backgroundImage: const NetworkImage('https://ui-avatars.com/api/?name=User&background=0058BC&color=fff'),
-            backgroundColor: Colors.grey.shade200,
+            backgroundColor: const Color(0xFF0058BC),
+            child: Text(
+              controller.authService.userInitials,
+              style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
+            ),
           ),
-        ),
+        )),
       ],
     );
   }
@@ -130,130 +119,144 @@ class CheckoutView extends GetView<CheckoutController> {
   }
 
   Widget _buildOrderSummary() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            const Text(
-              'Ringkasan Pesanan',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF0B1C30),
-              ),
-            ),
-            InkWell(
-              onTap: () => Get.back(),
-              child: const Text(
-                'Edit',
+    final cartController = Get.find<CartController>();
+    final currencyFormat = NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0);
+
+    return Obx(() {
+      final items = cartController.items;
+      final totalItems = items.length;
+      final itemNames = items.isEmpty ? 'Tidak ada item' : items.map((e) => e.title).join(' & ');
+      final subtotal = cartController.subtotal;
+      final serviceFee = cartController.serviceFee;
+      final totalPayment = cartController.totalPayment;
+
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                'Ringkasan Pesanan',
                 style: TextStyle(
-                  fontSize: 14,
+                  fontSize: 18,
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFF0058BC),
+                  color: Color(0xFF0B1C30),
                 ),
               ),
+              InkWell(
+                onTap: () => Get.back(),
+                child: const Text(
+                  'Edit',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF0058BC),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: const [
+                BoxShadow(
+                  color: Colors.black12,
+                  blurRadius: 4,
+                  offset: Offset(0, 2),
+                ),
+              ],
             ),
-          ],
-        ),
-        const SizedBox(height: 16),
-        Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            boxShadow: const [
-              BoxShadow(
-                color: Colors.black12,
-                blurRadius: 4,
-                offset: Offset(0, 2),
-              ),
-            ],
-          ),
-          child: Column(
-            children: [
-              Row(
-                children: [
-                  Container(
-                    width: 64,
-                    height: 64,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFE5EEFF),
-                      borderRadius: BorderRadius.circular(12),
+            child: Column(
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      width: 64,
+                      height: 64,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFE5EEFF),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Icon(Icons.local_laundry_service, color: Color(0xFF0058BC), size: 32),
                     ),
-                    child: const Icon(Icons.local_laundry_service, color: Color(0xFF0058BC), size: 32),
-                  ),
-                  const SizedBox(width: 16),
-                  const Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              'Total Item (2)',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                                color: Color(0xFF0B1C30),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                'Total Item ($totalItems)',
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFF0B1C30),
+                                ),
                               ),
-                            ),
-                            Text(
-                              'Rp 90.000',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                                color: Color(0xFF0B1C30),
+                              Text(
+                                currencyFormat.format(subtotal),
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFF0B1C30),
+                                ),
                               ),
-                            ),
-                          ],
-                        ),
-                        SizedBox(height: 4),
-                        Text(
-                          'Cuci Reguler & Premium',
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: Color(0xFF414755),
+                            ],
                           ),
-                        ),
-                      ],
+                          const SizedBox(height: 4),
+                          Text(
+                            itemNames,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontSize: 14,
+                              color: Color(0xFF414755),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              const Divider(height: 1, color: Color(0xFFC1C6D7)),
-              const SizedBox(height: 16),
-              const Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text('Subtotal', style: TextStyle(fontSize: 14, color: Color(0xFF414755))),
-                  Text('Rp 90.000', style: TextStyle(fontSize: 14, color: Color(0xFF414755))),
-                ],
-              ),
-              const SizedBox(height: 8),
-              const Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text('Biaya Layanan', style: TextStyle(fontSize: 14, color: Color(0xFF414755))),
-                  Text('Rp 2.000', style: TextStyle(fontSize: 14, color: Color(0xFF0058BC))),
-                ],
-              ),
-              const SizedBox(height: 12),
-              const Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text('Total', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF0B1C30))),
-                  Text('Rp 92.000', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF0058BC))),
-                ],
-              ),
-            ],
+                  ],
+                ),
+                const SizedBox(height: 16),
+                const Divider(height: 1, color: Color(0xFFC1C6D7)),
+                const SizedBox(height: 16),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text('Subtotal', style: TextStyle(fontSize: 14, color: Color(0xFF414755))),
+                    Text(currencyFormat.format(subtotal), style: const TextStyle(fontSize: 14, color: Color(0xFF414755))),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text('Biaya Layanan', style: TextStyle(fontSize: 14, color: Color(0xFF414755))),
+                    Text(currencyFormat.format(serviceFee), style: const TextStyle(fontSize: 14, color: Color(0xFF0058BC))),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text('Total', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF0B1C30))),
+                    Text(currencyFormat.format(totalPayment), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF0058BC))),
+                  ],
+                ),
+              ],
+            ),
           ),
-        ),
-      ],
-    );
+        ],
+      );
+    });
   }
 
   Widget _buildVisualDivider() {

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../controllers/services_controller.dart';
 import '../../../routes/app_pages.dart';
+import '../../../data/models/service_model.dart';
 
 class ServicesView extends GetView<ServicesController> {
   const ServicesView({super.key});
@@ -269,9 +270,9 @@ class ServicesView extends GetView<ServicesController> {
     });
   }
 
-  Widget _buildServiceItem(ServiceItem service) {
+  Widget _buildServiceItem(ServiceModel service) {
     // Determine card icon/image styling based on category
-    final isEkspres = service.category == 'Ekspres';
+    final isEkspres = service.name.toLowerCase().contains('kilat');
 
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
@@ -306,7 +307,7 @@ class ServicesView extends GetView<ServicesController> {
                       : ClipRRect(
                           borderRadius: BorderRadius.circular(12),
                           child: Image.network(
-                            service.imageUrl,
+                            service.imageUrl ?? 'https://images.unsplash.com/photo-1517677208171-0bc6725a3e60?w=200',
                             fit: BoxFit.cover,
                           ),
                         ),
@@ -322,7 +323,7 @@ class ServicesView extends GetView<ServicesController> {
                         children: [
                           Expanded(
                             child: Text(
-                              service.title,
+                              service.name,
                               style: const TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.bold,
@@ -333,7 +334,7 @@ class ServicesView extends GetView<ServicesController> {
                             ),
                           ),
                           Text(
-                            service.price,
+                            'Rp ${service.pricePerKg.toInt()}/kg',
                             style: const TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.bold,
@@ -344,7 +345,7 @@ class ServicesView extends GetView<ServicesController> {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        service.subtitle,
+                        service.description ?? '',
                         style: const TextStyle(
                           fontSize: 12,
                           color: Color(0xFF50616B),
@@ -362,7 +363,7 @@ class ServicesView extends GetView<ServicesController> {
                           ),
                           const SizedBox(width: 4),
                           Text(
-                            service.time,
+                            service.estimatedDuration,
                             style: TextStyle(
                               fontSize: 12,
                               fontWeight: isEkspres ? FontWeight.bold : FontWeight.normal,
@@ -380,7 +381,7 @@ class ServicesView extends GetView<ServicesController> {
           // Divider & Button
           const Divider(height: 1, color: Color(0xFFE5EEFF)),
           InkWell(
-            onTap: () => Get.toNamed(Routes.SERVICE_DETAIL),
+            onTap: () => Get.toNamed(Routes.SERVICE_DETAIL, arguments: service.id),
             child: Container(
               width: double.infinity,
               padding: const EdgeInsets.symmetric(vertical: 12),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:intl/intl.dart';
 import '../controllers/home_controller.dart';
 import '../../../routes/app_pages.dart';
 
@@ -55,14 +56,17 @@ class HomeView extends GetView<HomeController> {
       ),
       centerTitle: true,
       actions: [
-        Padding(
+        Obx(() => Padding(
           padding: const EdgeInsets.only(right: 20.0),
           child: CircleAvatar(
             radius: 16,
-            backgroundImage: const NetworkImage('https://ui-avatars.com/api/?name=User&background=0058BC&color=fff'),
-            backgroundColor: Colors.grey.shade200,
+            backgroundColor: const Color(0xFF0058BC),
+            child: Text(
+              controller.authService.userInitials,
+              style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
+            ),
           ),
-        ),
+        )),
       ],
     );
   }
@@ -80,10 +84,14 @@ class HomeView extends GetView<HomeController> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const CircleAvatar(
+                  Obx(() => CircleAvatar(
                     radius: 32,
-                    backgroundImage: NetworkImage('https://ui-avatars.com/api/?name=User&background=0058BC&color=fff'),
-                  ),
+                    backgroundColor: const Color(0xFF0058BC),
+                    child: Text(
+                      controller.authService.userInitials,
+                      style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
+                    ),
+                  )),
                   const SizedBox(height: 16),
                   Text(
                     controller.userName,
@@ -371,79 +379,92 @@ class HomeView extends GetView<HomeController> {
   }
 
   Widget _buildPopularServicesSection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            const Text(
-              'Layanan Populer',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF0B1C30),
-              ),
-            ),
-            GestureDetector(
-              onTap: () => Get.toNamed(Routes.SERVICES),
-              child: const Text(
-                'Lihat Semua',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF0058BC),
-                ),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 16),
-        _buildServiceCard(
-          title: 'Cuci Kiloan Standard',
-          subtitle: 'Cuci & Kering • Selesai 24 jam',
-          price: 'Rp 12.000 /kg',
-          imageUrl: 'https://images.unsplash.com/photo-1517677208171-0bc6725a3e60?ixlib=rb-1.2.1&auto=format&fit=crop&w=200&q=80',
-          badge: 'RAMAH LINGKUNGAN',
-        ),
-        const SizedBox(height: 12),
-        _buildServiceCard(
-          title: 'Setrika Premium',
-          subtitle: 'Perawatan Ahli • Selesai 12 jam',
-          price: 'Rp 5.000 /pc',
-          imageUrl: 'https://images.unsplash.com/photo-1545173168-9f1947eebb7f?ixlib=rb-1.2.1&auto=format&fit=crop&w=200&q=80',
-          badge: 'PERAWATAN KHUSUS',
-        ),
-        const SizedBox(height: 24),
-        OutlinedButton(
-          onPressed: () => Get.toNamed(Routes.SERVICES),
-          style: OutlinedButton.styleFrom(
-            minimumSize: const Size(double.infinity, 56),
-            backgroundColor: const Color(0xFF0070EB),
-            side: BorderSide.none,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-            ),
-            elevation: 2,
-          ),
-          child: const Row(
-            mainAxisAlignment: MainAxisAlignment.center,
+    return Obx(() {
+      if (controller.isLoadingServices.value) {
+        return const Center(child: CircularProgressIndicator());
+      }
+
+      if (controller.services.isEmpty) {
+        return const Center(child: Text('Tidak ada layanan tersedia.'));
+      }
+
+      final displayServices = controller.services.take(3).toList();
+
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                'Lihat Semua Layanan',
+              const Text(
+                'Layanan Populer',
                 style: TextStyle(
-                  fontSize: 16,
+                  fontSize: 18,
                   fontWeight: FontWeight.bold,
-                  color: Colors.white,
+                  color: Color(0xFF0B1C30),
                 ),
               ),
-              SizedBox(width: 8),
-              Icon(Icons.arrow_forward, color: Colors.white, size: 20),
+              GestureDetector(
+                onTap: () => Get.toNamed(Routes.SERVICES),
+                child: const Text(
+                  'Lihat Semua',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF0058BC),
+                  ),
+                ),
+              ),
             ],
           ),
-        ),
-      ],
-    );
+          const SizedBox(height: 16),
+          ...displayServices.map((service) {
+            final formatCurrency = NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0);
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 12.0),
+              child: GestureDetector(
+                onTap: () => Get.toNamed(Routes.SERVICE_DETAIL, arguments: service.id),
+                child: _buildServiceCard(
+                  title: service.name,
+                  subtitle: '${service.description ?? ''} • Selesai ${service.estimatedDuration}',
+                  price: '${formatCurrency.format(service.pricePerKg)} /kg',
+                  imageUrl: service.imageUrl ?? 'https://images.unsplash.com/photo-1517677208171-0bc6725a3e60?w=200',
+                  badge: 'TERLARIS',
+                ),
+              ),
+            );
+          }),
+          const SizedBox(height: 12),
+          OutlinedButton(
+            onPressed: () => Get.toNamed(Routes.SERVICES),
+            style: OutlinedButton.styleFrom(
+              minimumSize: const Size(double.infinity, 56),
+              backgroundColor: const Color(0xFF0070EB),
+              side: BorderSide.none,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              elevation: 2,
+            ),
+            child: const Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  'Lihat Semua Layanan',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+                SizedBox(width: 8),
+                Icon(Icons.arrow_forward, color: Colors.white, size: 20),
+              ],
+            ),
+          ),
+        ],
+      );
+    });
   }
 
   Widget _buildServiceCard({

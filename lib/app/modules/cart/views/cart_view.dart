@@ -46,9 +46,30 @@ class CartView extends GetView<CartController> {
 
   PreferredSizeWidget _buildAppBar() {
     return AppBar(
-      backgroundColor: const Color(0xFFF8F9FF),
+      backgroundColor: const Color(0xFFF8F9FF).withValues(alpha: 0.9),
       elevation: 0,
+      title: const Text(
+        'Keranjang',
+        style: TextStyle(
+          fontSize: 18,
+          fontWeight: FontWeight.bold,
+          color: Color(0xFF0B1C30),
+        ),
+      ),
       centerTitle: true,
+      actions: [
+        Obx(() => Padding(
+          padding: const EdgeInsets.only(right: 20.0),
+          child: CircleAvatar(
+            radius: 16,
+            backgroundColor: const Color(0xFF0058BC),
+            child: Text(
+              controller.authService.userInitials,
+              style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
+            ),
+          ),
+        )),
+      ],
     );
   }
 
@@ -79,15 +100,7 @@ class CartView extends GetView<CartController> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      'Keranjang',
-                      style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF0B1C30),
-                      ),
-                    ),
-                    const SizedBox(height: 4),
+
                     Text(
                       'Hampir siap untuk pakaian bersih dan wangi!',
                       style: TextStyle(

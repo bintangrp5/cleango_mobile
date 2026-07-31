@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:get_storage/get_storage.dart';
 
 import 'app/routes/app_pages.dart';
 import 'app/data/services/auth_service.dart';
@@ -9,18 +9,15 @@ import 'app/data/services/auth_service.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
+  // Initialize GetStorage
+  await GetStorage.init();
+  
   // Load environment variables (opsional, jika pakai .env)
   try {
     await dotenv.load(fileName: ".env");
   } catch (e) {
     debugPrint("Warning: File .env tidak ditemukan, menggunakan nilai default.");
   }
-
-  // Initialize Supabase
-  await Supabase.initialize(
-    url: dotenv.env['SUPABASE_URL'] ?? 'https://your-project.supabase.co',
-    anonKey: dotenv.env['SUPABASE_ANON_KEY'] ?? 'your-anon-key',
-  );
 
   // Initialize GetX Services
   await initServices();

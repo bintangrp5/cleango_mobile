@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:intl/intl.dart';
 import '../controllers/admin_dashboard_controller.dart';
+import '../../../data/models/order_model.dart';
 
 class AdminDashboardView extends GetView<AdminDashboardController> {
   const AdminDashboardView({super.key});
@@ -18,17 +20,41 @@ class AdminDashboardView extends GetView<AdminDashboardController> {
               _buildStatsSection(),
               _buildFilterChips(),
               const SizedBox(height: 16),
-              _buildOrdersList(),
+              Obx(() {
+                if (controller.isLoading.value) {
+                  return const Center(child: Padding(
+                    padding: EdgeInsets.all(32.0),
+                    child: CircularProgressIndicator(),
+                  ));
+                }
+                
+                final orders = controller.filteredOrders;
+                if (orders.isEmpty) {
+                  return const Center(
+                    child: Padding(
+                      padding: EdgeInsets.all(32.0),
+                      child: Text('Tidak ada pesanan.'),
+                    ),
+                  );
+                }
+
+                return Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: Column(
+                    children: orders.map((o) => _buildOrderCard(o)).toList(),
+                  ),
+                );
+              }),
               const SizedBox(height: 100), // Spacing for FAB
             ],
           ),
         ),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () {},
+        onPressed: () => controller.fetchAllOrders(),
         backgroundColor: const Color(0xFF0058BC),
         elevation: 4,
-        child: const Icon(Icons.add, color: Colors.white, size: 28),
+        child: const Icon(Icons.refresh, color: Colors.white, size: 28),
       ),
     );
   }
@@ -223,23 +249,26 @@ class AdminDashboardView extends GetView<AdminDashboardController> {
     );
   }
 
-  Widget _buildOrdersList() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: Column(
-        children: [
-          _buildNewOrderCard(),
-          const SizedBox(height: 16),
-          _buildProcessingOrderCard(),
-          const SizedBox(height: 16),
-          _buildPendingOrderCard(),
-        ],
-      ),
-    );
-  }
+  Widget _buildOrderCard(OrderModel order) {
+    final currencyFormat = NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0);
+    
+    // Status color logic
+    Color statusColor = const Color(0xFF9E3D00); // Default orange
+    IconData statusIcon = Icons.fiber_new;
+    
+    if (order.status == 'Diproses' || order.status == 'Dijemput') {
+      statusColor = const Color(0xFF0058BC);
+      statusIcon = Icons.refresh;
+    } else if (order.status == 'Diantar') {
+      statusColor = const Color(0xFF414755);
+      statusIcon = Icons.local_shipping;
+    } else if (order.status == 'Selesai') {
+      statusColor = Colors.green;
+      statusIcon = Icons.check_circle;
+    }
 
-  Widget _buildNewOrderCard() {
     return Container(
+      margin: const EdgeInsets.only(bottom: 16),
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
         color: Colors.white,
@@ -249,7 +278,7 @@ class AdminDashboardView extends GetView<AdminDashboardController> {
       child: IntrinsicHeight(
         child: Row(
           children: [
-            Container(width: 6, color: const Color(0xFF9E3D00)),
+            Container(width: 6, color: statusColor),
             Expanded(
               child: Padding(
                 padding: const EdgeInsets.all(16),
@@ -259,41 +288,43 @@ class AdminDashboardView extends GetView<AdminDashboardController> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Row(
+                        Row(
                           children: [
-                            Icon(Icons.fiber_new, color: Color(0xFF9E3D00), size: 16),
-                            SizedBox(width: 4),
+                            Icon(statusIcon, color: statusColor, size: 16),
+                            const SizedBox(width: 4),
                             Text(
-                              'New Order #8842',
-                              style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF9E3D00)),
+                              '${order.status} #${order.orderNumber}',
+                              style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: statusColor),
                             ),
                           ],
                         ),
-                        Container(
-                          padding: const EdgeInsets.all(4),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFE5EEFF),
-                            borderRadius: BorderRadius.circular(24),
-                          ),
-                          child: const Icon(Icons.more_vert, size: 20, color: Color(0xFF0058BC)),
-                        ),
+                        // Dropdown for updating status
+                        _buildStatusDropdown(order),
                       ],
                     ),
                     const SizedBox(height: 4),
-                    const Text(
-                      'Alex Johnson',
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF0B1C30)),
+                    Text(
+                      order.customerName,
+                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF0B1C30)),
                     ),
                     const SizedBox(height: 8),
-                    const Row(
+                    Row(
                       children: [
-                        Icon(Icons.local_laundry_service, size: 16, color: Color(0xFF414755)),
-                        SizedBox(width: 4),
-                        Text('Wash & Dry', style: TextStyle(fontSize: 14, color: Color(0xFF414755))),
-                        SizedBox(width: 16),
-                        Icon(Icons.calendar_today, size: 16, color: Color(0xFF414755)),
-                        SizedBox(width: 4),
-                        Text('Today, 2PM', style: TextStyle(fontSize: 14, color: Color(0xFF414755))),
+                        const Icon(Icons.local_laundry_service, size: 16, color: Color(0xFF414755)),
+                        const SizedBox(width: 4),
+                        Text('${order.items.length} Layanan', style: const TextStyle(fontSize: 14, color: Color(0xFF414755))),
+                        const SizedBox(width: 16),
+                        const Icon(Icons.calendar_today, size: 16, color: Color(0xFF414755)),
+                        const SizedBox(width: 4),
+                        Text(DateFormat('dd MMM, HH:mm').format(order.createdAt.toLocal()), style: const TextStyle(fontSize: 14, color: Color(0xFF414755))),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        const Icon(Icons.payments, size: 16, color: Color(0xFF414755)),
+                        const SizedBox(width: 4),
+                        Text(currencyFormat.format(order.totalPrice), style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Color(0xFF0058BC))),
                       ],
                     ),
                     const SizedBox(height: 12),
@@ -303,50 +334,20 @@ class AdminDashboardView extends GetView<AdminDashboardController> {
                         color: const Color(0xFFEFF4FF),
                         borderRadius: BorderRadius.circular(8),
                       ),
-                      child: const Row(
+                      child: Row(
                         children: [
-                          Icon(Icons.location_on, size: 16, color: Color(0xFF414755)),
-                          SizedBox(width: 8),
+                          const Icon(Icons.location_on, size: 16, color: Color(0xFF414755)),
+                          const SizedBox(width: 8),
                           Expanded(
                             child: Text(
-                              '123 Maple St, North Quarter',
-                              style: TextStyle(fontSize: 14, color: Color(0xFF414755)),
-                              maxLines: 1,
+                              order.address,
+                              style: const TextStyle(fontSize: 14, color: Color(0xFF414755)),
+                              maxLines: 2,
                               overflow: TextOverflow.ellipsis,
                             ),
                           ),
                         ],
                       ),
-                    ),
-                    const SizedBox(height: 12),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: ElevatedButton(
-                            onPressed: () => controller.acceptOrder('8842'),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFF0058BC),
-                              foregroundColor: Colors.white,
-                              elevation: 0,
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                            ),
-                            child: const Text('Accept Order'),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        InkWell(
-                          onTap: () => controller.rejectOrder('8842'),
-                          child: Container(
-                            width: 48,
-                            height: 48,
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFFFDAD6),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: const Icon(Icons.close, color: Color(0xFF93000A)),
-                          ),
-                        ),
-                      ],
                     ),
                   ],
                 ),
@@ -358,179 +359,37 @@ class AdminDashboardView extends GetView<AdminDashboardController> {
     );
   }
 
-  Widget _buildProcessingOrderCard() {
+  Widget _buildStatusDropdown(OrderModel order) {
     return Container(
-      clipBehavior: Clip.antiAlias,
+      height: 32,
+      padding: const EdgeInsets.symmetric(horizontal: 8),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 4, offset: Offset(0, 2))],
+        color: const Color(0xFFE5EEFF),
+        borderRadius: BorderRadius.circular(8),
       ),
-      child: IntrinsicHeight(
-        child: Row(
-          children: [
-            Container(width: 6, color: const Color(0xFF0058BC)),
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Row(
-                          children: [
-                            Icon(Icons.refresh, color: Color(0xFF0058BC), size: 16),
-                            SizedBox(width: 4),
-                            Text(
-                              'Processing #8839',
-                              style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF0058BC)),
-                            ),
-                          ],
-                        ),
-                        Container(
-                          padding: const EdgeInsets.all(4),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFE5EEFF),
-                            borderRadius: BorderRadius.circular(24),
-                          ),
-                          child: const Icon(Icons.assignment_turned_in, size: 20, color: Color(0xFF0058BC)),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 4),
-                    const Text(
-                      'Sarah Williams',
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF0B1C30)),
-                    ),
-                    const SizedBox(height: 8),
-                    const Row(
-                      children: [
-                        Icon(Icons.dry_cleaning, size: 16, color: Color(0xFF004493)),
-                        SizedBox(width: 4),
-                        Text('Eco-Friendly Dry Clean', style: TextStyle(fontSize: 14, color: Color(0xFF004493))),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFEFF4FF),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: const Row(
-                        children: [
-                          Icon(Icons.location_on, size: 16, color: Color(0xFF414755)),
-                          SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              '452 Oak Avenue, Apt 4B',
-                              style: TextStyle(fontSize: 14, color: Color(0xFF414755)),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    const Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text('Drying in progress...', style: TextStyle(fontSize: 12, color: Color(0xFF414755))),
-                        Text('75%', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF0058BC))),
-                      ],
-                    ),
-                    const SizedBox(height: 4),
-                    LinearProgressIndicator(
-                      value: 0.75,
-                      backgroundColor: const Color(0xFFDCE9FF),
-                      color: const Color(0xFF0058BC),
-                      borderRadius: BorderRadius.circular(4),
-                      minHeight: 8,
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildPendingOrderCard() {
-    return Opacity(
-      opacity: 0.8,
-      child: Container(
-        clipBehavior: Clip.antiAlias,
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 4, offset: Offset(0, 2))],
-        ),
-        child: IntrinsicHeight(
-          child: Row(
-            children: [
-              Container(width: 6, color: const Color(0xFFC1C6D7)),
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Row(
-                        children: [
-                          Icon(Icons.schedule, color: Color(0xFF717786), size: 16),
-                          SizedBox(width: 4),
-                          Text(
-                            'Pending #8845',
-                            style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF717786)),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 4),
-                      const Text(
-                        'David Miller',
-                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF0B1C30)),
-                      ),
-                      const SizedBox(height: 8),
-                      const Row(
-                        children: [
-                          Icon(Icons.local_laundry_service, size: 16, color: Color(0xFF414755)),
-                          SizedBox(width: 4),
-                          Text('Wash & Fold', style: TextStyle(fontSize: 14, color: Color(0xFF414755))),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-                      Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFEFF4FF),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: const Row(
-                          children: [
-                            Icon(Icons.location_on, size: 16, color: Color(0xFF414755)),
-                            SizedBox(width: 8),
-                            Expanded(
-                              child: Text(
-                                '888 Pine St, The Lofts',
-                                style: TextStyle(fontSize: 14, color: Color(0xFF414755)),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<String>(
+          value: order.status,
+          icon: const Icon(Icons.arrow_drop_down, color: Color(0xFF0058BC)),
+          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF0058BC)),
+          onChanged: (String? newValue) {
+            if (newValue != null && newValue != order.status) {
+              controller.updateOrderStatus(order.id, newValue);
+            }
+          },
+          items: <String>[
+            'Menunggu Penjemputan',
+            'Dijemput',
+            'Diproses',
+            'Diantar',
+            'Selesai',
+            'Dibatalkan'
+          ].map<DropdownMenuItem<String>>((String value) {
+            return DropdownMenuItem<String>(
+              value: value,
+              child: Text(value),
+            );
+          }).toList(),
         ),
       ),
     );

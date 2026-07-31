@@ -105,7 +105,7 @@ class ServiceDetailView extends GetView<ServiceDetailController> {
       fit: StackFit.expand,
       children: [
         Image.network(
-          'https://images.unsplash.com/photo-1545173168-9f1947eebb7f?ixlib=rb-1.2.1&auto=format&fit=crop&w=600&q=80',
+          controller.service.imageUrl ?? 'https://images.unsplash.com/photo-1545173168-9f1947eebb7f?ixlib=rb-1.2.1&auto=format&fit=crop&w=600&q=80',
           fit: BoxFit.cover,
         ),
         Container(
@@ -154,9 +154,9 @@ class ServiceDetailView extends GetView<ServiceDetailController> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Cuci & Setrika',
-          style: TextStyle(
+        Text(
+          controller.service.name,
+          style: const TextStyle(
             fontSize: 24,
             fontWeight: FontWeight.bold,
             color: Color(0xFF0B1C30),
@@ -167,9 +167,9 @@ class ServiceDetailView extends GetView<ServiceDetailController> {
           children: [
             const Icon(Icons.payments, size: 20, color: Color(0xFF0058BC)),
             const SizedBox(width: 8),
-            const Text(
-              'Rp 12.500',
-              style: TextStyle(
+            Text(
+              'Rp ${controller.service.pricePerKg.toInt()}',
+              style: const TextStyle(
                 fontSize: 22,
                 fontWeight: FontWeight.bold,
                 color: Color(0xFF0058BC),
@@ -190,7 +190,7 @@ class ServiceDetailView extends GetView<ServiceDetailController> {
   }
 
   Widget _buildDescriptionSection() {
-    return const Column(
+    return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
@@ -204,8 +204,8 @@ class ServiceDetailView extends GetView<ServiceDetailController> {
         ),
         SizedBox(height: 8),
         Text(
-          'Nikmati kemudahan layanan pencucian menyeluruh menggunakan deterjen premium ramah lingkungan. Kami menjamin pakaian Anda kembali bersih, harum, dan disetrika dengan rapi menggunakan setrika uap untuk menjaga serat kain tetap awet.',
-          style: TextStyle(
+          controller.service.description ?? 'Tidak ada deskripsi',
+          style: const TextStyle(
             fontSize: 14,
             color: Color(0xFF50616B),
             height: 1.5,
@@ -237,12 +237,12 @@ class ServiceDetailView extends GetView<ServiceDetailController> {
                   child: const Icon(Icons.timer, color: Color(0xFF0058BC)),
                 ),
                 const SizedBox(width: 12),
-                const Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('Estimasi', style: TextStyle(fontSize: 12, color: Color(0xFF50616B))),
-                    Text('2 Hari', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Color(0xFF0B1C30))),
-                  ],
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text('Estimasi', style: TextStyle(fontSize: 12, color: Color(0xFF50616B))),
+                      Text(controller.service.estimatedDuration, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Color(0xFF0B1C30))),
+                    ],
                 ),
               ],
             ),

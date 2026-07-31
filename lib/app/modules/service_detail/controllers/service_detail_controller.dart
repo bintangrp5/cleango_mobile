@@ -1,11 +1,22 @@
 import 'package:get/get.dart';
-
+import '../../../data/models/service_model.dart';
+import '../../home/controllers/home_controller.dart';
+import '../../cart/controllers/cart_controller.dart';
 
 class ServiceDetailController extends GetxController {
-  final pricePerKg = 12500;
+  late final ServiceModel service;
+  
   final weight = 2.obs;
 
-  int get totalPrice => weight.value * pricePerKg;
+  @override
+  void onInit() {
+    super.onInit();
+    final String serviceId = Get.arguments;
+    final homeController = Get.find<HomeController>();
+    service = homeController.services.firstWhere((s) => s.id == serviceId);
+  }
+
+  int get totalPrice => weight.value * service.pricePerKg.toInt();
 
   void incrementWeight() {
     weight.value++;
@@ -18,12 +29,20 @@ class ServiceDetailController extends GetxController {
   }
 
   void addToCart() {
+    final cart = Get.find<CartController>();
+    cart.addToCart(CartItem(
+      id: service.id,
+      title: service.name,
+      icon: service.imageUrl ?? 'local_laundry_service',
+      pricePerKg: service.pricePerKg.toInt(),
+      initialWeight: weight.value,
+    ));
+
     Get.snackbar(
       'Sukses', 
       'Layanan ditambahkan ke keranjang!',
       snackPosition: SnackPosition.TOP,
       duration: const Duration(seconds: 2),
     );
-    // TODO: Add to cart state logic here
   }
 }
