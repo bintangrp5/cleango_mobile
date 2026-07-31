@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import '../controllers/home_controller.dart';
 import '../../../routes/app_pages.dart';
 
+
 class HomeView extends GetView<HomeController> {
   const HomeView({super.key});
 
@@ -12,7 +13,6 @@ class HomeView extends GetView<HomeController> {
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FF),
       appBar: _buildAppBar(context),
-      drawer: _buildDrawer(),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 16.0),
@@ -40,12 +40,17 @@ class HomeView extends GetView<HomeController> {
     return AppBar(
       backgroundColor: const Color(0xFFF8F9FF).withValues(alpha: 0.9),
       elevation: 0,
-      leading: Builder(
-        builder: (context) => IconButton(
-          icon: const Icon(Icons.menu, color: Color(0xFF0B1C30)),
-          onPressed: () => Scaffold.of(context).openDrawer(),
+      leading: Obx(() => Padding(
+        padding: const EdgeInsets.only(left: 20.0),
+        child: CircleAvatar(
+          radius: 16,
+          backgroundColor: const Color(0xFF0058BC),
+          child: Text(
+            controller.authService.userInitials,
+            style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
+          ),
         ),
-      ),
+      )),
       title: const Text(
         'Beranda',
         style: TextStyle(
@@ -55,129 +60,11 @@ class HomeView extends GetView<HomeController> {
         ),
       ),
       centerTitle: true,
-      actions: [
-        Obx(() => Padding(
-          padding: const EdgeInsets.only(right: 20.0),
-          child: CircleAvatar(
-            radius: 16,
-            backgroundColor: const Color(0xFF0058BC),
-            child: Text(
-              controller.authService.userInitials,
-              style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
-            ),
-          ),
-        )),
-      ],
+      actions: const [],
     );
   }
 
-  Widget _buildDrawer() {
-    return Drawer(
-      child: Container(
-        color: Colors.white,
-        child: Column(
-          children: [
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.only(top: 60, left: 24, right: 24, bottom: 24),
-              color: const Color(0xFF0070EB).withValues(alpha: 0.1),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Obx(() => CircleAvatar(
-                    radius: 32,
-                    backgroundColor: const Color(0xFF0058BC),
-                    child: Text(
-                      controller.authService.userInitials,
-                      style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
-                    ),
-                  )),
-                  const SizedBox(height: 16),
-                  Text(
-                    controller.userName,
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF0B1C30),
-                    ),
-                  ),
-                  const Text(
-                    'user@example.com', // TODO: Ambil dari AuthService
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Color(0xFF414755),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Expanded(
-              child: ListView(
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                children: [
-                  _buildDrawerItem(Icons.home, 'Beranda', true, () => Get.back()),
-                  _buildDrawerItem(Icons.location_on, 'Alamat Saya', false, () {
-                    Get.back();
-                    Get.snackbar('Info', 'Menu Alamat Saya belum tersedia');
-                  }),
-                  _buildDrawerItem(Icons.local_offer, 'Promo', false, () {
-                    Get.back();
-                    Get.snackbar('Info', 'Menu Promo belum tersedia');
-                  }),
-                  _buildDrawerItem(Icons.info, 'Tentang Kami', false, () {
-                    Get.back();
-                    Get.snackbar('Info', 'Menu Tentang Kami belum tersedia');
-                  }),
-                  const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-                    child: Divider(color: Color(0xFFC1C6D7)),
-                  ),
-                  _buildDrawerItem(Icons.logout, 'Keluar', false, () {
-                    Get.back();
-                    _showLogoutDialog();
-                  }, isError: true),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 
-  Widget _buildDrawerItem(IconData icon, String title, bool isActive, VoidCallback onTap, {bool isError = false}) {
-    final color = isError ? const Color(0xFFBA1A1A) : (isActive ? const Color(0xFF0058BC) : const Color(0xFF414755));
-    final bgColor = isActive ? const Color(0xFF0058BC).withValues(alpha: 0.1) : Colors.transparent;
-
-    return ListTile(
-      leading: Icon(icon, color: color),
-      title: Text(
-        title,
-        style: TextStyle(
-          fontSize: 16,
-          fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
-          color: color,
-        ),
-      ),
-      tileColor: bgColor,
-      contentPadding: const EdgeInsets.symmetric(horizontal: 24),
-      onTap: onTap,
-    );
-  }
-
-  void _showLogoutDialog() {
-    Get.defaultDialog(
-      title: 'Keluar',
-      middleText: 'Apakah Anda yakin ingin keluar?',
-      textConfirm: 'Ya',
-      textCancel: 'Tidak',
-      confirmTextColor: Colors.white,
-      onConfirm: () {
-        Get.back();
-        controller.logout();
-      },
-    );
-  }
 
   Widget _buildGreetingSection() {
     return Column(
@@ -317,19 +204,19 @@ class HomeView extends GetView<HomeController> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            _buildCategoryItem(Icons.local_laundry_service, 'Cuci & Setrika'),
-            _buildCategoryItem(Icons.iron, 'Setrika Saja'),
-            _buildCategoryItem(Icons.bolt, 'Kilat'),
+            _buildCategoryItem(Icons.local_laundry_service, 'Cuci & Setrika', 'Reguler'),
+            _buildCategoryItem(Icons.iron, 'Setrika Saja', 'Setrika Saja'),
+            _buildCategoryItem(Icons.bolt, 'Kilat', 'Ekspres'),
           ],
         ),
       ],
     );
   }
 
-  Widget _buildCategoryItem(IconData icon, String label) {
+  Widget _buildCategoryItem(IconData icon, String label, String argument) {
     return Expanded(
       child: InkWell(
-        onTap: () => Get.toNamed(Routes.SERVICES),
+        onTap: () => Get.toNamed(Routes.SERVICES, arguments: argument),
         borderRadius: BorderRadius.circular(16),
         child: Container(
           margin: const EdgeInsets.symmetric(horizontal: 6),
@@ -505,6 +392,7 @@ class HomeView extends GetView<HomeController> {
               children: [
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Expanded(
                       child: Text(
@@ -514,10 +402,11 @@ class HomeView extends GetView<HomeController> {
                           fontWeight: FontWeight.bold,
                           color: Color(0xFF0B1C30),
                         ),
-                        maxLines: 1,
+                        maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
+                    const SizedBox(width: 8),
                     Text(
                       price,
                       style: const TextStyle(

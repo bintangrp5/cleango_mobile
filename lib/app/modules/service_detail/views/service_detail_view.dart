@@ -85,18 +85,6 @@ class ServiceDetailView extends GetView<ServiceDetailController> {
           ),
         ),
       ),
-      actions: [
-        Padding(
-          padding: const EdgeInsets.only(right: 16.0),
-          child: CircleAvatar(
-            backgroundColor: Colors.white.withValues(alpha: 0.9),
-            child: IconButton(
-              icon: const Icon(Icons.share, color: Color(0xFF0B1C30)),
-              onPressed: () {},
-            ),
-          ),
-        ),
-      ],
     );
   }
 
@@ -168,7 +156,7 @@ class ServiceDetailView extends GetView<ServiceDetailController> {
             const Icon(Icons.payments, size: 20, color: Color(0xFF0058BC)),
             const SizedBox(width: 8),
             Text(
-              'Rp ${controller.service.pricePerKg.toInt()}',
+              NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0).format(controller.service.pricePerKg),
               style: const TextStyle(
                 fontSize: 22,
                 fontWeight: FontWeight.bold,
@@ -268,13 +256,13 @@ class ServiceDetailView extends GetView<ServiceDetailController> {
                   child: const Icon(Icons.check_circle, color: Color(0xFF9E3D00)),
                 ),
                 const SizedBox(width: 12),
-                const Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('Hasil', style: TextStyle(fontSize: 12, color: Color(0xFF50616B))),
-                    Text('Premium', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Color(0xFF0B1C30))),
-                  ],
-                ),
+                  const Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Kualitas', style: TextStyle(fontSize: 12, color: Color(0xFF50616B))),
+                      Text('Terjamin', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Color(0xFF0B1C30))),
+                    ],
+                  ),
               ],
             ),
           ),
@@ -408,32 +396,49 @@ class ServiceDetailView extends GetView<ServiceDetailController> {
   }
 
   Widget _buildActionButton() {
-    return ElevatedButton(
-      onPressed: controller.addToCart,
-      style: ElevatedButton.styleFrom(
-        backgroundColor: const Color(0xFF0058BC),
-        foregroundColor: Colors.white,
-        padding: const EdgeInsets.symmetric(vertical: 16),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
+    return Row(
+      children: [
+        SizedBox(
+          width: 60,
+          height: 60,
+          child: OutlinedButton(
+            onPressed: controller.addToCart,
+            style: OutlinedButton.styleFrom(
+              padding: EdgeInsets.zero,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              side: const BorderSide(color: Color(0xFF0058BC), width: 1.5),
+            ),
+            child: const Icon(Icons.add_shopping_cart, color: Color(0xFF0058BC)),
+          ),
         ),
-        elevation: 8,
-        shadowColor: const Color(0xFF0058BC).withValues(alpha: 0.4),
-      ),
-      child: const Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.shopping_bag, size: 20),
-          SizedBox(width: 12),
-          Text(
-            'Tambah ke Keranjang',
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.bold,
+        const SizedBox(width: 12),
+        Expanded(
+          child: SizedBox(
+            height: 60,
+            child: ElevatedButton(
+              onPressed: controller.orderNow,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF0058BC),
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                elevation: 4,
+                shadowColor: const Color(0xFF0058BC).withValues(alpha: 0.4),
+              ),
+              child: const Text(
+                'Pesan Sekarang',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
             ),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }

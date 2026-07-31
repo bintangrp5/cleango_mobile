@@ -2,6 +2,7 @@ import 'package:get/get.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import '../../../data/services/auth_service.dart';
 import '../../../data/models/service_model.dart';
+import '../../../utils/snackbar_util.dart';
 
 class HomeController extends GetxController {
   final AuthService authService = Get.find<AuthService>();
@@ -26,10 +27,10 @@ class HomeController extends GetxController {
         final List<dynamic> data = response.body;
         services.value = data.map((json) => ServiceModel.fromJson(json)).toList();
       } else {
-        Get.snackbar('Error', 'Gagal memuat layanan: ${response.statusText}');
+        AppSnackbar.show('Error', 'Gagal memuat layanan: ${response.statusText}');
       }
     } catch (e) {
-      Get.snackbar('Error', 'Terjadi kesalahan jaringan');
+      AppSnackbar.show('Error', 'Terjadi kesalahan jaringan');
     } finally {
       isLoadingServices.value = false;
     }

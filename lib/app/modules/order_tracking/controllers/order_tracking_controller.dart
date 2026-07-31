@@ -1,7 +1,8 @@
 import 'package:get/get.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:dio/dio.dart';
 import '../../../data/services/auth_service.dart';
 import '../../../data/models/order_model.dart';
+import '../../../utils/snackbar_util.dart';
 
 class OrderTrackingController extends GetxController {
   final authService = Get.find<AuthService>();
@@ -26,19 +27,20 @@ class OrderTrackingController extends GetxController {
     }
 
     try {
-      final baseUrl = dotenv.env['BACKEND_API_URL'] ?? 'http://10.0.2.2:8000/api/v1';
-      final response = await GetConnect().get('$baseUrl/orders/user/${user.id}');
+      final response = await authService.dio.get('/orders/user/${user.id}');
 
       if (response.statusCode == 200) {
-        final List<dynamic> data = response.body;
+        final List<dynamic> data = response.data;
         if (data.isNotEmpty) {
-          // Ambil pesanan terbaru (index 0 jika tersortir, atau cari yg paling baru)
-          order.value = OrderModel.fromJson(data.last); 
+          // Data disortir DESC dari backend, jadi index 0 adalah yang terbaru
+          order.value = OrderModel.fromJson(data.first); 
           _updateStepFromStatus(order.value!.status);
         }
       }
+    } on DioException catch (e) {
+      AppSnackbar.show('Error', 'Gagal memuat pesanan: ${e.message}');
     } catch (e) {
-      Get.snackbar('Error', 'Gagal memuat pesanan');
+      AppSnackbar.show('Error', 'Kesalahan sistem: $e');
     } finally {
       isLoading.value = false;
     }
@@ -50,14 +52,16 @@ class OrderTrackingController extends GetxController {
         currentStep.value = 0;
         break;
       case 'Dijemput':
-      case 'Diproses':
         currentStep.value = 1;
         break;
-      case 'Diantar':
+      case 'Diproses':
         currentStep.value = 2;
         break;
-      case 'Selesai':
+      case 'Diantar':
         currentStep.value = 3;
+        break;
+      case 'Selesai':
+        currentStep.value = 4;
         break;
       default:
         currentStep.value = 0;

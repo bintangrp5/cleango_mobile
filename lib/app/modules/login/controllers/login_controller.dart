@@ -4,6 +4,7 @@ import 'package:dio/dio.dart';
 import '../../../routes/app_pages.dart';
 import '../../../data/services/auth_service.dart';
 import '../../../data/models/user_model.dart';
+import '../../../utils/snackbar_util.dart';
 
 class LoginController extends GetxController {
   final authService = Get.find<AuthService>();
@@ -17,7 +18,7 @@ class LoginController extends GetxController {
     final password = passwordController.text.trim();
     
     if (email.isEmpty || password.isEmpty) {
-      Get.snackbar('Error', 'Silakan isi email dan kata sandi', backgroundColor: Colors.redAccent, colorText: Colors.white);
+      AppSnackbar.show('Error', 'Silakan isi email dan kata sandi');
       return;
     }
 
@@ -38,9 +39,9 @@ class LoginController extends GetxController {
       if (e.response != null) {
         errorMessage = e.response?.data['detail'] ?? 'Email atau kata sandi salah';
       }
-      Get.snackbar('Login Gagal', errorMessage, backgroundColor: Colors.redAccent, colorText: Colors.white, snackPosition: SnackPosition.TOP);
+      AppSnackbar.show('Login Gagal', errorMessage);
     } catch (e) {
-      Get.snackbar('Error', 'Gagal menghubungi server', backgroundColor: Colors.redAccent, colorText: Colors.white, snackPosition: SnackPosition.TOP);
+      AppSnackbar.show('Error', 'Gagal menghubungi server');
     } finally {
       isLoading.value = false;
     }

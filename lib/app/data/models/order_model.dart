@@ -49,8 +49,8 @@ class OrderModel {
 
   factory OrderModel.fromJson(Map<String, dynamic> json) {
     return OrderModel(
-      id: json['id'],
-      orderNumber: json['order_number'],
+      id: json['id']?.toString() ?? '',
+      orderNumber: json['order_number']?.toString() ?? json['id']?.toString().substring(0, 8).toUpperCase() ?? 'ORD-123',
       customerName: json['customer_name'] ?? 'Pelanggan',
       phoneNumber: json['phone_number'] ?? '-',
       address: json['address'] ?? '-',

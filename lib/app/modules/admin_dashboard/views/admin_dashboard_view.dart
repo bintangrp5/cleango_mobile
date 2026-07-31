@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
+import 'package:fl_chart/fl_chart.dart';
 import '../controllers/admin_dashboard_controller.dart';
 import '../../../data/models/order_model.dart';
+import '../../../widgets/admin_drawer.dart';
 
 class AdminDashboardView extends GetView<AdminDashboardController> {
   const AdminDashboardView({super.key});
@@ -10,368 +12,363 @@ class AdminDashboardView extends GetView<AdminDashboardController> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FF),
+      backgroundColor: const Color(0xFFF4F7FC), // Soft blue-ish background
       appBar: _buildAppBar(),
+      drawer: const AdminDrawer(),
       body: SafeArea(
-        child: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildStatsSection(),
-              _buildFilterChips(),
-              const SizedBox(height: 16),
-              Obx(() {
-                if (controller.isLoading.value) {
-                  return const Center(child: Padding(
-                    padding: EdgeInsets.all(32.0),
-                    child: CircularProgressIndicator(),
-                  ));
-                }
-                
-                final orders = controller.filteredOrders;
-                if (orders.isEmpty) {
-                  return const Center(
-                    child: Padding(
-                      padding: EdgeInsets.all(32.0),
-                      child: Text('Tidak ada pesanan.'),
-                    ),
-                  );
-                }
-
-                return Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  child: Column(
-                    children: orders.map((o) => _buildOrderCard(o)).toList(),
-                  ),
-                );
-              }),
-              const SizedBox(height: 100), // Spacing for FAB
-            ],
-          ),
-        ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => controller.fetchAllOrders(),
-        backgroundColor: const Color(0xFF0058BC),
-        elevation: 4,
-        child: const Icon(Icons.refresh, color: Colors.white, size: 28),
+        child: Obx(() {
+          if (controller.isLoading.value) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          
+          return SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('Ringkasan Performa', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF0058BC))),
+                const SizedBox(height: 16),
+                _buildSummaryCards(),
+                const SizedBox(height: 32),
+                const Text('Analisis Layanan', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF0058BC))),
+                const SizedBox(height: 16),
+                _buildChartsRow(),
+                const SizedBox(height: 32),
+                _buildRecentOrdersHeader(),
+                const SizedBox(height: 16),
+                _buildRecentOrdersList(),
+              ],
+            ),
+          );
+        }),
       ),
     );
   }
 
   PreferredSizeWidget _buildAppBar() {
     return AppBar(
-      backgroundColor: const Color(0xFFF8F9FF).withValues(alpha: 0.9),
-      elevation: 0,
-      leading: IconButton(
-        icon: const Icon(Icons.arrow_back, color: Color(0xFF0058BC)),
-        onPressed: () => Get.back(),
-      ),
-      title: Row(
-        mainAxisSize: MainAxisSize.min,
+      backgroundColor: Colors.white,
+      elevation: 1,
+      shadowColor: Colors.black12,
+      iconTheme: const IconThemeData(color: Color(0xFF0058BC)),
+      title: Obx(() => Row(
         children: [
-          Image.asset(
-            'assets/images/logo.png',
-            height: 24,
-            width: 24,
-            errorBuilder: (context, error, stackTrace) => const Icon(
-              Icons.local_laundry_service,
-              color: Color(0xFF0058BC),
-              size: 24,
+          CircleAvatar(
+            radius: 16,
+            backgroundColor: const Color(0xFF0058BC),
+            child: Text(
+              controller.authService.userInitials,
+              style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
             ),
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: 12),
           const Text(
-            'Admin',
+            'Admin Hub',
             style: TextStyle(
-              fontSize: 18,
+              fontSize: 20,
               fontWeight: FontWeight.bold,
-              color: Color(0xFF0B1C30),
+              color: Color(0xFF0058BC),
             ),
           ),
         ],
+      )),
+      // Removed actions to let user use drawer instead
+    );
+  }
+
+
+
+  Widget _buildSummaryCards() {
+    final formatCurrency = NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0);
+    return GridView.count(
+      crossAxisCount: 2,
+      crossAxisSpacing: 12,
+      mainAxisSpacing: 12,
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      childAspectRatio: 1.4,
+      children: [
+        _buildCardItem('Total Pesanan', '${controller.orders.length}', Icons.shopping_bag_outlined, color: const Color(0xFF0058BC)),
+        _buildCardItem('Pendapatan', formatCurrency.format(controller.totalRevenue.value), Icons.account_balance_wallet_outlined, color: Colors.green),
+        _buildCardItem('Total Pengguna', '${controller.totalUsers.value}', Icons.people_outline, color: Colors.purple),
+      ],
+    );
+  }
+
+  Widget _buildCardItem(String title, String value, IconData icon, {required Color color}) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: color.withValues(alpha: 0.1),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          )
+        ],
       ),
-      centerTitle: true,
-      actions: [
-        Padding(
-          padding: const EdgeInsets.only(right: 20.0),
-          child: CircleAvatar(
-            radius: 16,
-            backgroundImage: const NetworkImage('https://ui-avatars.com/api/?name=Admin&background=0058BC&color=fff'),
-            backgroundColor: Colors.grey.shade200,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(color: color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(8)),
+                child: Icon(icon, size: 18, color: color),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  title,
+                  style: const TextStyle(fontSize: 12, color: Colors.grey, fontWeight: FontWeight.w600),
+                ),
+              ),
+            ],
           ),
+          const Spacer(),
+          Text(
+            value,
+            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF0B1C30)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildChartsRow() {
+    return Column(
+      children: [
+        _buildBarChartCard(),
+        const SizedBox(height: 16),
+        _buildPieChartCard(),
+      ],
+    );
+  }
+
+  Widget _buildBarChartCard() {
+    return Container(
+      width: double.infinity,
+      height: 250,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 4, offset: Offset(0, 2))],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text('Top 5 Layanan Terlaris', style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF0058BC))),
+          const SizedBox(height: 24),
+          Expanded(
+            child: controller.topServices.isEmpty
+                ? const Center(child: Text('Belum ada data', style: TextStyle(color: Colors.grey)))
+                : BarChart(
+                    BarChartData(
+                      alignment: BarChartAlignment.spaceAround,
+                      maxY: controller.topServices.values.isEmpty ? 10 : controller.topServices.values.first.toDouble() * 1.2,
+                      barTouchData: BarTouchData(enabled: false),
+                      titlesData: FlTitlesData(
+                        show: true,
+                        bottomTitles: AxisTitles(
+                          sideTitles: SideTitles(
+                            showTitles: true,
+                            getTitlesWidget: (double value, TitleMeta meta) {
+                              if (value.toInt() >= controller.topServices.length) return const SizedBox();
+                              String title = controller.topServices.keys.elementAt(value.toInt());
+                              return Padding(
+                                padding: const EdgeInsets.only(top: 8.0),
+                                child: Text(
+                                  title.length > 6 ? '${title.substring(0, 6)}..' : title,
+                                  style: const TextStyle(color: Colors.grey, fontSize: 10, fontWeight: FontWeight.bold),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                        leftTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                        topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                        rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                      ),
+                      gridData: const FlGridData(show: false),
+                      borderData: FlBorderData(show: false),
+                      barGroups: controller.topServices.entries.toList().asMap().entries.map((entry) {
+                        return BarChartGroupData(
+                          x: entry.key,
+                          barRods: [
+                            BarChartRodData(
+                              toY: entry.value.value.toDouble(),
+                              color: const Color(0xFF0058BC),
+                              width: 30,
+                              borderRadius: const BorderRadius.only(topLeft: Radius.circular(6), topRight: Radius.circular(6)),
+                            )
+                          ],
+                        );
+                      }).toList(),
+                    ),
+                  ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPieChartCard() {
+    final Map<String, Color> statusColors = {
+      'Menunggu Penjemputan': Colors.orange,
+      'Dijemput': Colors.blue,
+      'Diproses': const Color(0xFF0058BC),
+      'Diantar': Colors.purple,
+      'Selesai': Colors.teal,
+    };
+
+    final sections = controller.statusPortions.entries.where((e) => e.value > 0).map((entry) {
+      return PieChartSectionData(
+        color: statusColors[entry.key] ?? Colors.grey,
+        value: entry.value.toDouble(),
+        title: '${entry.value}',
+        radius: 30,
+        titleStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white),
+      );
+    }).toList();
+
+    return Container(
+      width: double.infinity,
+      height: 300,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 4, offset: Offset(0, 2))],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text('Status Pesanan', style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF0058BC))),
+          const SizedBox(height: 16),
+          Expanded(
+            child: sections.isEmpty
+                ? const Center(child: Text('Belum ada data', style: TextStyle(color: Colors.grey)))
+                : Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    PieChart(
+                        PieChartData(
+                          sectionsSpace: 2,
+                          centerSpaceRadius: 40,
+                          sections: sections,
+                        ),
+                      ),
+                      const Text('Total\nPesanan', textAlign: TextAlign.center, style: TextStyle(fontSize: 10, color: Colors.grey)),
+                  ],
+                ),
+          ),
+          const SizedBox(height: 16),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            alignment: WrapAlignment.center,
+            children: statusColors.entries.map((e) => _buildIndicator(e.value, e.key)).toList(),
+          )
+        ],
+      ),
+    );
+  }
+  
+  Widget _buildIndicator(Color color, String text) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(width: 8, height: 8, decoration: BoxDecoration(shape: BoxShape.circle, color: color)),
+        const SizedBox(width: 4),
+        Text(text, style: const TextStyle(fontSize: 10, color: Colors.grey)),
+      ],
+    );
+  }
+
+  Widget _buildRecentOrdersHeader() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        const Text(
+          'Pesanan Terkini',
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+            color: Color(0xFF0B1C30),
+          ),
+        ),
+        TextButton(
+          onPressed: () {},
+          child: const Text('Lihat Semua', style: TextStyle(color: Color(0xFF0058BC))),
         ),
       ],
     );
   }
 
-  Widget _buildStatsSection() {
-    return Padding(
-      padding: const EdgeInsets.all(20),
-      child: Row(
-        children: [
-          Expanded(
-            child: Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: const Color(0xFF0070EB).withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'ACTIVE TASKS',
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 1.2,
-                      color: Color(0xFF0058BC),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      Obx(() => Text(
-                        '\${controller.activeTasks.value}',
-                        style: const TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF0B1C30),
-                        ),
-                      )),
-                      const SizedBox(width: 8),
-                      const Padding(
-                        padding: EdgeInsets.only(bottom: 4),
-                        child: Text(
-                          '+3 today',
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF0058BC),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: const Color(0xFFDCE9FF),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'COMPLETED',
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 1.2,
-                      color: Color(0xFF414755),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      Obx(() => Text(
-                        '\${controller.completedTasks.value}',
-                        style: const TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF0B1C30),
-                        ),
-                      )),
-                      const SizedBox(width: 8),
-                      const Padding(
-                        padding: EdgeInsets.only(bottom: 4),
-                        child: Text(
-                          'this week',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Color(0xFF414755),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildFilterChips() {
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: Row(
-        children: controller.filters.map((filter) {
-          return Obx(() {
-            final isSelected = controller.selectedFilter.value == filter;
-            return Padding(
-              padding: const EdgeInsets.only(right: 8),
-              child: InkWell(
-                onTap: () => controller.selectFilter(filter),
-                borderRadius: BorderRadius.circular(24),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: isSelected ? const Color(0xFF0058BC) : const Color(0xFFE5EEFF),
-                    borderRadius: BorderRadius.circular(24),
-                  ),
-                  child: Text(
-                    filter,
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                      color: isSelected ? Colors.white : const Color(0xFF414755),
-                    ),
-                  ),
-                ),
-              ),
-            );
-          });
-        }).toList(),
-      ),
+  Widget _buildRecentOrdersList() {
+    final recentOrders = controller.orders.take(3).toList();
+    if (recentOrders.isEmpty) {
+      return const Center(child: Text('Tidak ada pesanan.'));
+    }
+    
+    return Column(
+      children: recentOrders.map((o) => _buildOrderCard(o)).toList(),
     );
   }
 
   Widget _buildOrderCard(OrderModel order) {
-    final currencyFormat = NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0);
-    
-    // Status color logic
-    Color statusColor = const Color(0xFF9E3D00); // Default orange
-    IconData statusIcon = Icons.fiber_new;
-    
-    if (order.status == 'Diproses' || order.status == 'Dijemput') {
-      statusColor = const Color(0xFF0058BC);
-      statusIcon = Icons.refresh;
-    } else if (order.status == 'Diantar') {
-      statusColor = const Color(0xFF414755);
-      statusIcon = Icons.local_shipping;
-    } else if (order.status == 'Selesai') {
-      statusColor = Colors.green;
-      statusIcon = Icons.check_circle;
-    }
-
     return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      clipBehavior: Clip.antiAlias,
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(16),
         boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 4, offset: Offset(0, 2))],
       ),
-      child: IntrinsicHeight(
-        child: Row(
-          children: [
-            Container(width: 6, color: statusColor),
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Row(
-                          children: [
-                            Icon(statusIcon, color: statusColor, size: 16),
-                            const SizedBox(width: 4),
-                            Text(
-                              '${order.status} #${order.orderNumber}',
-                              style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: statusColor),
-                            ),
-                          ],
-                        ),
-                        // Dropdown for updating status
-                        _buildStatusDropdown(order),
-                      ],
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      order.customerName,
-                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF0B1C30)),
-                    ),
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        const Icon(Icons.local_laundry_service, size: 16, color: Color(0xFF414755)),
-                        const SizedBox(width: 4),
-                        Text('${order.items.length} Layanan', style: const TextStyle(fontSize: 14, color: Color(0xFF414755))),
-                        const SizedBox(width: 16),
-                        const Icon(Icons.calendar_today, size: 16, color: Color(0xFF414755)),
-                        const SizedBox(width: 4),
-                        Text(DateFormat('dd MMM, HH:mm').format(order.createdAt.toLocal()), style: const TextStyle(fontSize: 14, color: Color(0xFF414755))),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        const Icon(Icons.payments, size: 16, color: Color(0xFF414755)),
-                        const SizedBox(width: 4),
-                        Text(currencyFormat.format(order.totalPrice), style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Color(0xFF0058BC))),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFEFF4FF),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Row(
-                        children: [
-                          const Icon(Icons.location_on, size: 16, color: Color(0xFF414755)),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              order.address,
-                              style: const TextStyle(fontSize: 14, color: Color(0xFF414755)),
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text('#${order.orderNumber}', style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF0058BC))),
+              _buildStatusDropdown(order),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(order.customerName, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+          const SizedBox(height: 4),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text('${order.items.length} Layanan', style: const TextStyle(color: Colors.grey, fontSize: 12)),
+              Text(NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0).format(order.totalPrice), style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.green)),
+            ],
+          ),
+        ],
       ),
     );
   }
 
   Widget _buildStatusDropdown(OrderModel order) {
     return Container(
-      height: 32,
-      padding: const EdgeInsets.symmetric(horizontal: 8),
+      height: 30,
+      padding: const EdgeInsets.symmetric(horizontal: 10),
       decoration: BoxDecoration(
-        color: const Color(0xFFE5EEFF),
+        color: const Color(0xFFF4F7FC),
         borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: const Color(0xFFE5EEFF)),
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
           value: order.status,
-          icon: const Icon(Icons.arrow_drop_down, color: Color(0xFF0058BC)),
-          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF0058BC)),
+          icon: const Icon(Icons.keyboard_arrow_down, color: Color(0xFF0058BC), size: 16),
+          style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF0058BC)),
           onChanged: (String? newValue) {
             if (newValue != null && newValue != order.status) {
               controller.updateOrderStatus(order.id, newValue);

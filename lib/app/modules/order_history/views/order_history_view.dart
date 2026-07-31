@@ -90,9 +90,6 @@ class OrderHistoryView extends GetView<OrderHistoryController> {
     } else if (order.status == 'Selesai') {
       statusColor = Colors.green;
       statusIcon = Icons.check_circle;
-    } else if (order.status == 'Dibatalkan') {
-      statusColor = const Color(0xFFBA1A1A);
-      statusIcon = Icons.cancel;
     }
 
     return Container(

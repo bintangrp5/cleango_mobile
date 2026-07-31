@@ -50,35 +50,19 @@ class ProfileView extends GetView<ProfileController> {
       ),
       child: Column(
         children: [
-          Stack(
-            children: [
-              Container(
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(color: Colors.white, width: 4),
-                ),
-                child: Obx(() => CircleAvatar(
-                  radius: 50,
-                  backgroundColor: Colors.white,
-                  child: Text(
-                    controller.authService.userInitials,
-                    style: const TextStyle(color: Color(0xFF0058BC), fontSize: 36, fontWeight: FontWeight.bold),
-                  ),
-                )),
+          Container(
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(color: Colors.white, width: 4),
+            ),
+            child: Obx(() => CircleAvatar(
+              radius: 50,
+              backgroundColor: Colors.white,
+              child: Text(
+                controller.authService.userInitials,
+                style: const TextStyle(color: Color(0xFF0058BC), fontSize: 36, fontWeight: FontWeight.bold),
               ),
-              Positioned(
-                bottom: 0,
-                right: 0,
-                child: Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: const BoxDecoration(
-                    color: Color(0xFF0070EB),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(Icons.edit, color: Colors.white, size: 20),
-                ),
-              ),
-            ],
+            )),
           ),
           const SizedBox(height: 16),
           Obx(() => Text(
@@ -143,10 +127,16 @@ class ProfileView extends GetView<ProfileController> {
           ),
           const SizedBox(height: 16),
 
+          const SizedBox(height: 16),
+          _buildMenuItem(
+            icon: Icons.info_outline,
+            title: 'Tentang Kami',
+            onTap: () => Get.toNamed(Routes.ABOUT_US),
+          ),
           _buildMenuItem(
             icon: Icons.help_outline,
             title: 'Pusat Bantuan',
-            onTap: () => Get.snackbar('Info', 'Fitur Pusat Bantuan belum tersedia'),
+            onTap: () => Get.toNamed(Routes.HELP_CENTER),
           ),
           const SizedBox(height: 24),
           _buildMenuItem(
@@ -160,6 +150,7 @@ class ProfileView extends GetView<ProfileController> {
       ),
     );
   }
+
 
   Widget _buildMenuItem({
     required IconData icon,

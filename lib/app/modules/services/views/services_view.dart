@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:intl/intl.dart';
 import '../controllers/services_controller.dart';
 import '../../../routes/app_pages.dart';
 import '../../../data/models/service_model.dart';
@@ -53,20 +54,7 @@ class ServicesView extends GetView<ServicesController> {
         ),
       ),
       centerTitle: true,
-      actions: [
-        Padding(
-          padding: const EdgeInsets.only(right: 20.0),
-          child: Image.asset(
-            'assets/images/logo.png',
-            height: 32,
-            width: 32,
-            errorBuilder: (context, error, stackTrace) => const Icon(
-              Icons.local_laundry_service,
-              color: Color(0xFF0058BC),
-            ),
-          ),
-        ),
-      ],
+      actions: const [],
     );
   }
 
@@ -115,7 +103,7 @@ class ServicesView extends GetView<ServicesController> {
   }
 
   Widget _buildCategoryFilters() {
-    final categories = ['Semua', 'Reguler', 'Ekspres', 'Premium'];
+    final categories = ['Semua', 'Reguler', 'Setrika Saja', 'Ekspres', 'Premium'];
 
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
@@ -320,6 +308,7 @@ class ServicesView extends GetView<ServicesController> {
                     children: [
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Expanded(
                             child: Text(
@@ -329,12 +318,13 @@ class ServicesView extends GetView<ServicesController> {
                                 fontWeight: FontWeight.bold,
                                 color: Color(0xFF0B1C30),
                               ),
-                              maxLines: 1,
+                              maxLines: 2,
                               overflow: TextOverflow.ellipsis,
                             ),
                           ),
+                          const SizedBox(width: 8),
                           Text(
-                            'Rp ${service.pricePerKg.toInt()}/kg',
+                            '${NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0).format(service.pricePerKg)}/kg',
                             style: const TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.bold,

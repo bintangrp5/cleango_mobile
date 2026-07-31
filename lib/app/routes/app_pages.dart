@@ -2,6 +2,12 @@
 
 import 'package:get/get.dart';
 
+import '../modules/about_us/bindings/about_us_binding.dart';
+import '../modules/about_us/views/about_us_view.dart';
+
+import '../modules/help_center/bindings/help_center_binding.dart';
+import '../modules/help_center/views/help_center_view.dart';
+
 import '../modules/admin_dashboard/bindings/admin_dashboard_binding.dart';
 import '../modules/admin_dashboard/views/admin_dashboard_view.dart';
 import '../modules/login/bindings/login_binding.dart';
@@ -27,12 +33,18 @@ import '../modules/order_history/views/order_history_view.dart';
 import '../modules/edit_profile/bindings/edit_profile_binding.dart';
 import '../modules/edit_profile/views/edit_profile_view.dart';
 
+import '../modules/admin_users/views/admin_users_view.dart';
+import '../modules/admin_services/views/admin_services_view.dart';
+import '../modules/admin_orders/views/admin_orders_view.dart';
+
+import '../modules/admin_service_form/views/admin_service_form_view.dart';
+
 part 'app_routes.dart';
 
 class AppPages {
   AppPages._();
 
-  static const INITIAL = Routes.DASHBOARD;
+  static const INITIAL = Routes.LOGIN;
 
   static final routes = [
     GetPage(
@@ -94,6 +106,32 @@ class AppPages {
       name: _Paths.EDIT_PROFILE,
       page: () => const EditProfileView(),
       binding: EditProfileBinding(),
+    ),
+    GetPage(
+      name: _Paths.ADMIN_USERS,
+      page: () => const AdminUsersView(),
+    ),
+    GetPage(
+      name: _Paths.ADMIN_SERVICES,
+      page: () => const AdminServicesView(),
+    ),
+    GetPage(
+      name: _Paths.ADMIN_ORDERS,
+      page: () => const AdminOrdersView(),
+    ),
+    GetPage(
+      name: _Paths.ADMIN_SERVICE_FORM,
+      page: () => const AdminServiceFormView(),
+    ),
+    GetPage(
+      name: _Paths.ABOUT_US,
+      page: () => const AboutUsView(),
+      binding: AboutUsBinding(),
+    ),
+    GetPage(
+      name: _Paths.HELP_CENTER,
+      page: () => const HelpCenterView(),
+      binding: HelpCenterBinding(),
     ),
   ];
 }

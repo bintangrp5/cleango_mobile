@@ -25,7 +25,8 @@ class ServiceModel {
       name: json['name']?.toString() ?? 'Layanan Tanpa Nama',
       description: json['description']?.toString(),
       pricePerKg: (json['price_per_kg'] as num?)?.toDouble() ?? 0.0,
-      estimatedDuration: json['estimated_duration']?.toString() ?? 'Tergantung Antrean',
+      estimatedDuration:
+          json['estimated_duration']?.toString() ?? 'Tergantung Antrean',
       imageUrl: json['image_url']?.toString(),
       isActive: json['is_active'] ?? true,
       iconName: json['icon_name']?.toString(),

@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:dio/dio.dart';
 import '../../../routes/app_pages.dart';
 import '../../../data/services/auth_service.dart';
+import '../../../utils/snackbar_util.dart';
 
 class RegisterController extends GetxController {
   final authService = Get.find<AuthService>();
@@ -20,17 +21,17 @@ class RegisterController extends GetxController {
     final confirmPassword = confirmPasswordController.text.trim();
     
     if (name.isEmpty || email.isEmpty || password.isEmpty || confirmPassword.isEmpty) {
-      Get.snackbar('Error', 'Semua field wajib diisi', backgroundColor: Colors.redAccent, colorText: Colors.white);
+      AppSnackbar.show('Error', 'Semua field wajib diisi');
       return;
     }
 
     if (password.length < 8) {
-      Get.snackbar('Error', 'Kata Sandi minimal harus 8 karakter', backgroundColor: Colors.redAccent, colorText: Colors.white);
+      AppSnackbar.show('Error', 'Kata Sandi minimal harus 8 karakter');
       return;
     }
 
     if (password != confirmPassword) {
-      Get.snackbar('Error', 'Kata Sandi dan Konfirmasi Kata Sandi tidak cocok', backgroundColor: Colors.redAccent, colorText: Colors.white);
+      AppSnackbar.show('Error', 'Kata Sandi dan Konfirmasi Kata Sandi tidak cocok');
       return;
     }
 
@@ -43,7 +44,7 @@ class RegisterController extends GetxController {
       });
 
       if (response.statusCode == 201) {
-        Get.snackbar('Sukses', 'Registrasi berhasil! Silakan login.', backgroundColor: Colors.green, colorText: Colors.white);
+        AppSnackbar.show('Sukses', 'Registrasi berhasil! Silakan login.');
         Get.offNamed(Routes.LOGIN);
       }
     } on DioException catch (e) {
@@ -55,23 +56,9 @@ class RegisterController extends GetxController {
             errorMessage = e.response?.data['detail'] ?? 'Terjadi kesalahan saat registrasi';
         }
       }
-      Get.snackbar(
-        'Registrasi Gagal', 
-        errorMessage, 
-        snackPosition: SnackPosition.TOP,
-        backgroundColor: Colors.redAccent, 
-        colorText: Colors.white,
-        margin: const EdgeInsets.all(16),
-      );
+      AppSnackbar.show('Registrasi Gagal', errorMessage);
     } catch (e) {
-      Get.snackbar(
-        'Error', 
-        'Terjadi kesalahan tidak terduga', 
-        snackPosition: SnackPosition.TOP,
-        backgroundColor: Colors.redAccent, 
-        colorText: Colors.white,
-        margin: const EdgeInsets.all(16),
-      );
+      AppSnackbar.show('Error', 'Terjadi kesalahan tidak terduga');
     } finally {
       isLoading.value = false;
     }

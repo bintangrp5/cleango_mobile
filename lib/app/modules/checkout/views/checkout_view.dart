@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart';
 import '../../cart/controllers/cart_controller.dart';
 import '../controllers/checkout_controller.dart';
 
@@ -38,12 +40,9 @@ class CheckoutView extends GetView<CheckoutController> {
     return AppBar(
       backgroundColor: const Color(0xFFF8F9FF).withValues(alpha: 0.9),
       elevation: 0,
-      leading: IconButton(
-        icon: const Icon(Icons.arrow_back, color: Color(0xFF0058BC)),
-        onPressed: () => Get.back(),
-      ),
+
       title: const Text(
-        'Checkout',
+        'Pembayaran',
         style: TextStyle(
           fontSize: 18,
           fontWeight: FontWeight.bold,
@@ -51,10 +50,11 @@ class CheckoutView extends GetView<CheckoutController> {
         ),
       ),
       centerTitle: true,
-      actions: [
-        Obx(() => Padding(
-          padding: const EdgeInsets.only(right: 20.0),
-          child: CircleAvatar(
+      leadingWidth: 80,
+      leading: Obx(() => Row(
+        children: [
+          const BackButton(color: Color(0xFF0B1C30)),
+          CircleAvatar(
             radius: 16,
             backgroundColor: const Color(0xFF0058BC),
             child: Text(
@@ -62,19 +62,20 @@ class CheckoutView extends GetView<CheckoutController> {
               style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
             ),
           ),
-        )),
-      ],
+        ],
+      )),
+      actions: const [],
     );
   }
 
   Widget _buildProgressStepper() {
     return Row(
       children: [
-        _buildStepItem(Icons.shopping_cart, 'Cart', isActive: true, isCompleted: false),
+        _buildStepItem(Icons.shopping_cart, 'Keranjang', isActive: true, isCompleted: false),
         _buildStepDivider(isActive: true),
-        _buildStepItem(Icons.location_on, 'Details', isActive: true, isCompleted: false),
+        _buildStepItem(Icons.location_on, 'Detail', isActive: true, isCompleted: false),
         _buildStepDivider(isActive: false),
-        _buildStepItem(Icons.check_circle, 'Confirm', isActive: false, isCompleted: false),
+        _buildStepItem(Icons.check_circle, 'Konfirmasi', isActive: false, isCompleted: false),
       ],
     );
   }
@@ -182,7 +183,16 @@ class CheckoutView extends GetView<CheckoutController> {
                         color: const Color(0xFFE5EEFF),
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      child: const Icon(Icons.local_laundry_service, color: Color(0xFF0058BC), size: 32),
+                      child: cartController.items.isNotEmpty && cartController.items.first.icon.startsWith('http')
+                          ? ClipRRect(
+                              borderRadius: BorderRadius.circular(12),
+                              child: Image.network(
+                                cartController.items.first.icon,
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) => const Icon(Icons.local_laundry_service, color: Color(0xFF0058BC), size: 32),
+                              ),
+                            )
+                          : const Icon(Icons.local_laundry_service, color: Color(0xFF0058BC), size: 32),
                     ),
                     const SizedBox(width: 16),
                     Expanded(
@@ -394,6 +404,45 @@ class CheckoutView extends GetView<CheckoutController> {
             }),
           ],
         ),
+        Obx(() {
+          if (controller.currentLat.value != null && controller.currentLng.value != null) {
+            return Container(
+              margin: const EdgeInsets.only(top: 16),
+              height: 200,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: const Color(0xFFC1C6D7), width: 1),
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: FlutterMap(
+                  options: MapOptions(
+                    initialCenter: LatLng(controller.currentLat.value!, controller.currentLng.value!),
+                    initialZoom: 16.0,
+                  ),
+                  children: [
+                    TileLayer(
+                      urlTemplate: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png',
+                      subdomains: const ['a', 'b', 'c', 'd'],
+                      userAgentPackageName: 'com.example.cleango_mobile',
+                    ),
+                    MarkerLayer(
+                      markers: [
+                        Marker(
+                          point: LatLng(controller.currentLat.value!, controller.currentLng.value!),
+                          width: 40,
+                          height: 40,
+                          child: const Icon(Icons.location_on, color: Colors.red, size: 40),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }
+          return const SizedBox.shrink();
+        }),
       ],
     );
   }

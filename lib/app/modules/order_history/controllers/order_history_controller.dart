@@ -2,6 +2,7 @@ import 'package:get/get.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import '../../../data/models/order_model.dart';
 import '../../../data/services/auth_service.dart';
+import '../../../utils/snackbar_util.dart';
 
 class OrderHistoryController extends GetxController {
   final isLoading = true.obs;
@@ -19,24 +20,23 @@ class OrderHistoryController extends GetxController {
     final user = authService.currentUser.value;
 
     if (user == null) {
-      Get.snackbar('Error', 'Silakan login terlebih dahulu');
+      AppSnackbar.show('Error', 'Silakan login terlebih dahulu');
       isLoading.value = false;
       return;
     }
 
     try {
-      final baseUrl = dotenv.env['BACKEND_API_URL'] ?? 'http://10.0.2.2:8000/api/v1';
-      final response = await GetConnect().get('$baseUrl/orders/user/${user.id}');
+      final response = await authService.dio.get('/orders/user/${user.id}');
 
       if (response.statusCode == 200) {
-        final List<dynamic> data = response.body;
+        final List<dynamic> data = response.data;
         // The backend already returns sorted by created_at desc.
         orders.value = data.map((json) => OrderModel.fromJson(json)).toList();
       } else {
-        Get.snackbar('Error', 'Gagal memuat riwayat pesanan: ${response.statusText}');
+        AppSnackbar.show('Error', 'Gagal memuat riwayat pesanan: ${response.statusMessage}');
       }
     } catch (e) {
-      Get.snackbar('Error', 'Kesalahan jaringan saat memuat riwayat pesanan');
+      AppSnackbar.show('Error', 'Kesalahan jaringan saat memuat riwayat pesanan');
     } finally {
       isLoading.value = false;
     }

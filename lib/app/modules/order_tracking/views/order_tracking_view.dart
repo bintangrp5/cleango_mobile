@@ -29,10 +29,7 @@ class OrderTrackingView extends GetView<OrderTrackingController> {
                 _buildHeroSection(),
                 const SizedBox(height: 24),
                 _buildStepper(),
-                _buildStepper(),
                 const SizedBox(height: 24),
-                _buildOrderDetailsAccordion(),
-                const SizedBox(height: 32),
                 _buildOrderDetailsAccordion(),
                 const SizedBox(height: 32),
               ],
@@ -56,10 +53,11 @@ class OrderTrackingView extends GetView<OrderTrackingController> {
         ),
       ),
       centerTitle: true,
-      actions: [
-        Obx(() => Padding(
-          padding: const EdgeInsets.only(right: 20.0),
-          child: CircleAvatar(
+      leadingWidth: 80,
+      leading: Obx(() => Row(
+        children: [
+          const BackButton(color: Color(0xFF0B1C30)),
+          CircleAvatar(
             radius: 16,
             backgroundColor: const Color(0xFF0058BC),
             child: Text(
@@ -67,8 +65,9 @@ class OrderTrackingView extends GetView<OrderTrackingController> {
               style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
             ),
           ),
-        )),
-      ],
+        ],
+      )),
+      actions: const [],
     );
   }
 
@@ -168,27 +167,35 @@ class OrderTrackingView extends GetView<OrderTrackingController> {
                   ),
                   const SizedBox(height: 24),
                   _buildStep(
+                    icon: Icons.hail,
+                    title: 'Dijemput',
+                    subtitle: 'Kurir sedang menjemput',
+                    isActive: controller.currentStep.value == 1,
+                    isCompleted: controller.currentStep.value > 1,
+                  ),
+                  const SizedBox(height: 24),
+                  _buildStep(
                     icon: Icons.local_laundry_service,
                     title: 'Diproses',
                     subtitle: 'Sedang dicuci & dilipat',
-                    isActive: controller.currentStep.value == 1,
-                    isCompleted: controller.currentStep.value > 1,
+                    isActive: controller.currentStep.value == 2,
+                    isCompleted: controller.currentStep.value > 2,
                   ),
                   const SizedBox(height: 24),
                   _buildStep(
                     icon: Icons.local_shipping,
                     title: 'Diantar',
                     subtitle: 'Kurir menuju ke lokasimu',
-                    isActive: controller.currentStep.value == 2,
-                    isCompleted: controller.currentStep.value > 2,
+                    isActive: controller.currentStep.value == 3,
+                    isCompleted: controller.currentStep.value > 3,
                   ),
                   const SizedBox(height: 24),
                   _buildStep(
                     icon: Icons.task_alt,
                     title: 'Selesai',
                     subtitle: 'Pesanan telah diterima',
-                    isActive: controller.currentStep.value == 3,
-                    isCompleted: controller.currentStep.value > 3,
+                    isActive: controller.currentStep.value == 4,
+                    isCompleted: controller.currentStep.value > 4,
                   ),
                 ],
               ),

@@ -2,6 +2,7 @@ import 'package:get/get.dart';
 import '../../../data/models/service_model.dart';
 import '../../home/controllers/home_controller.dart';
 import '../../cart/controllers/cart_controller.dart';
+import '../../../utils/snackbar_util.dart';
 
 class ServiceDetailController extends GetxController {
   late final ServiceModel service;
@@ -28,7 +29,7 @@ class ServiceDetailController extends GetxController {
     }
   }
 
-  void addToCart() {
+  void addToCart({bool showSnackbar = true}) {
     final cart = Get.find<CartController>();
     cart.addToCart(CartItem(
       id: service.id,
@@ -38,11 +39,13 @@ class ServiceDetailController extends GetxController {
       initialWeight: weight.value,
     ));
 
-    Get.snackbar(
-      'Sukses', 
-      'Layanan ditambahkan ke keranjang!',
-      snackPosition: SnackPosition.TOP,
-      duration: const Duration(seconds: 2),
-    );
+    if (showSnackbar) {
+      AppSnackbar.show('Sukses', 'Layanan ditambahkan ke keranjang!');
+    }
+  }
+
+  void orderNow() {
+    addToCart(showSnackbar: false);
+    Get.toNamed('/cart'); // Route directly to CART
   }
 }

@@ -1,8 +1,9 @@
 import 'package:get/get.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:dio/dio.dart';
 import '../../../data/services/auth_service.dart';
 import '../../../data/models/order_model.dart';
 import 'package:flutter/material.dart';
+import '../../../utils/snackbar_util.dart';
 
 class AdminDashboardController extends GetxController {
   final isLoading = true.obs;
@@ -10,49 +11,99 @@ class AdminDashboardController extends GetxController {
   
   final activeTasks = 0.obs;
   final completedTasks = 0.obs;
+  final totalRevenue = 0.0.obs;
+  final totalUsers = 0.obs;
+  
+  final topServices = <String, int>{}.obs;
+  final statusPortions = <String, int>{}.obs;
 
   final selectedFilter = 'Semua'.obs;
   final filters = ['Semua', 'Menunggu Penjemputan', 'Diproses', 'Diantar', 'Selesai'];
 
+  late AuthService authService;
+
   @override
   void onInit() {
     super.onInit();
+    authService = Get.find<AuthService>();
     fetchAllOrders();
+    fetchUsersStats();
+  }
+
+  Future<void> fetchUsersStats() async {
+    try {
+      final response = await authService.dio.get('/profiles');
+      if (response.statusCode == 200) {
+        final List<dynamic> data = response.data;
+        totalUsers.value = data.length;
+      }
+    } catch (e) {
+      // Ignore if fail
+    }
   }
 
   Future<void> fetchAllOrders() async {
     isLoading.value = true;
-    final authService = Get.find<AuthService>();
     final user = authService.currentUser.value;
 
     if (user == null || user.role != 'admin') {
-      Get.snackbar('Error', 'Akses ditolak: Hanya untuk admin.');
+      AppSnackbar.show('Error', 'Akses ditolak: Hanya untuk admin.');
       isLoading.value = false;
       return;
     }
 
     try {
-      final baseUrl = dotenv.env['BACKEND_API_URL'] ?? 'http://10.0.2.2:8000/api/v1';
-      final response = await GetConnect().get(
-        '$baseUrl/orders/admin/all',
-        headers: {'X-User-ID': user.id},
-      );
+      final response = await authService.dio.get('/orders/admin/all');
 
       if (response.statusCode == 200) {
-        final List<dynamic> data = response.body;
+        final List<dynamic> data = response.data;
         orders.value = data.map((json) => OrderModel.fromJson(json)).toList();
         
-        // Update stats
-        activeTasks.value = orders.where((o) => o.status != 'Selesai' && o.status != 'Dibatalkan').length;
-        completedTasks.value = orders.where((o) => o.status == 'Selesai').length;
+        _calculateStats();
       } else {
-        Get.snackbar('Error', 'Gagal memuat pesanan: ${response.statusText}');
+        AppSnackbar.show('Error', 'Gagal memuat pesanan');
       }
-    } catch (e) {
-      Get.snackbar('Error', 'Kesalahan jaringan');
+    } on DioException catch (e) {
+      AppSnackbar.show('Error', 'Kesalahan jaringan: ${e.message}');
     } finally {
       isLoading.value = false;
     }
+  }
+  
+  void _calculateStats() {
+    activeTasks.value = orders.where((o) => o.status != 'Selesai' && o.status != 'Dibatalkan').length;
+    completedTasks.value = orders.where((o) => o.status == 'Selesai').length;
+    
+    double revenue = 0;
+    Map<String, int> serviceCount = {};
+    Map<String, int> statusCount = {
+      'Menunggu Penjemputan': 0,
+      'Dijemput': 0,
+      'Diproses': 0,
+      'Diantar': 0,
+      'Selesai': 0,
+    };
+    
+    for (var order in orders) {
+      if (order.status == 'Selesai') {
+        revenue += order.totalPrice;
+      }
+      
+      statusCount[order.status] = (statusCount[order.status] ?? 0) + 1;
+      
+      for (var item in order.items) {
+        serviceCount[item.serviceName] = (serviceCount[item.serviceName] ?? 0) + 1;
+      }
+    }
+    
+    totalRevenue.value = revenue;
+    
+    // Sort top 5 services
+    var sortedEntries = serviceCount.entries.toList()
+      ..sort((a, b) => b.value.compareTo(a.value));
+    topServices.value = Map.fromEntries(sortedEntries.take(5));
+    
+    statusPortions.value = statusCount;
   }
 
   List<OrderModel> get filteredOrders {
@@ -69,33 +120,24 @@ class AdminDashboardController extends GetxController {
   }
 
   Future<void> updateOrderStatus(String orderId, String newStatus) async {
-    final authService = Get.find<AuthService>();
     final user = authService.currentUser.value;
 
     if (user == null || user.role != 'admin') return;
 
     try {
-      final baseUrl = dotenv.env['BACKEND_API_URL'] ?? 'http://10.0.2.2:8000/api/v1';
-      final response = await GetConnect().patch(
-        '$baseUrl/orders/admin/$orderId/status',
-        {"status": newStatus},
-        headers: {'X-User-ID': user.id},
+      final response = await authService.dio.patch(
+        '/orders/admin/$orderId/status',
+        data: {"status": newStatus},
       );
 
       if (response.statusCode == 200) {
-        Get.snackbar(
-          'Sukses',
-          'Status pesanan #$orderId diperbarui menjadi $newStatus',
-          snackPosition: SnackPosition.TOP,
-          backgroundColor: Colors.green.withValues(alpha: 0.1),
-          colorText: Colors.green,
-        );
+        AppSnackbar.show('Sukses', 'Status pesanan #$orderId diperbarui menjadi $newStatus');
         fetchAllOrders(); // Reload orders
       } else {
-        Get.snackbar('Error', 'Gagal memperbarui status: ${response.statusText}');
+        AppSnackbar.show('Error', 'Gagal memperbarui status');
       }
-    } catch (e) {
-      Get.snackbar('Error', 'Kesalahan jaringan saat update status');
+    } on DioException {
+      AppSnackbar.show('Error', 'Kesalahan jaringan saat update status');
     }
   }
 }

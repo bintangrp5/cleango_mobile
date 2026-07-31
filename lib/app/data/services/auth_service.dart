@@ -15,6 +15,9 @@ class AuthService extends GetxService {
   
   final FlutterSecureStorage secureStorage = const FlutterSecureStorage();
   final Rx<UserModel?> currentUser = Rx<UserModel?>(null);
+  final RxString userAddress = ''.obs;
+  final Rx<double?> userLat = Rx<double?>(null);
+  final Rx<double?> userLng = Rx<double?>(null);
 
   bool get isLoggedIn => currentUser.value != null;
   bool get isAdmin => currentUser.value?.role == 'admin';
@@ -43,7 +46,23 @@ class AuthService extends GetxService {
     // Auto login check
     await _checkAutoLogin();
     
+    // Load address and location
+    userAddress.value = await secureStorage.read(key: 'user_address') ?? '';
+    final latStr = await secureStorage.read(key: 'user_lat');
+    final lngStr = await secureStorage.read(key: 'user_lng');
+    if (latStr != null) userLat.value = double.tryParse(latStr);
+    if (lngStr != null) userLng.value = double.tryParse(lngStr);
+    
     return this;
+  }
+
+  Future<void> saveAddress(String address, {double? lat, double? lng}) async {
+    userAddress.value = address;
+    userLat.value = lat;
+    userLng.value = lng;
+    await secureStorage.write(key: 'user_address', value: address);
+    if (lat != null) await secureStorage.write(key: 'user_lat', value: lat.toString());
+    if (lng != null) await secureStorage.write(key: 'user_lng', value: lng.toString());
   }
 
   Future<void> _checkAutoLogin() async {

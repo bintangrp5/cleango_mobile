@@ -27,8 +27,7 @@ class CartView extends GetView<CartController> {
                     const SizedBox(height: 24),
                     _buildCartList(currencyFormat),
                     const SizedBox(height: 24),
-                    _buildCouponSection(),
-                    const SizedBox(height: 32),
+
                     _buildOrderSummary(currencyFormat),
                     const SizedBox(height: 24),
                     _buildNoteCard(),
@@ -57,10 +56,11 @@ class CartView extends GetView<CartController> {
         ),
       ),
       centerTitle: true,
-      actions: [
-        Obx(() => Padding(
-          padding: const EdgeInsets.only(right: 20.0),
-          child: CircleAvatar(
+      leadingWidth: 80,
+      leading: Obx(() => Row(
+        children: [
+          const BackButton(color: Color(0xFF0B1C30)),
+          CircleAvatar(
             radius: 16,
             backgroundColor: const Color(0xFF0058BC),
             child: Text(
@@ -68,8 +68,9 @@ class CartView extends GetView<CartController> {
               style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
             ),
           ),
-        )),
-      ],
+        ],
+      )),
+      actions: const [],
     );
   }
 
@@ -339,35 +340,6 @@ class CartView extends GetView<CartController> {
     );
   }
 
-  Widget _buildCouponSection() {
-    return Obx(() {
-      if (controller.items.isEmpty) return const SizedBox.shrink();
-      return Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: const Color(0xFFD3E4FE).withValues(alpha: 0.5),
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Row(
-          children: [
-            const Icon(Icons.sell, color: Color(0xFF9E3D00)),
-            const SizedBox(width: 12),
-            const Expanded(
-              child: Text(
-                'Pakai Kode Promo',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                  color: Color(0xFF0B1C30),
-                ),
-              ),
-            ),
-            Icon(Icons.chevron_right, color: const Color(0xFF0B1C30).withValues(alpha: 0.7)),
-          ],
-        ),
-      );
-    });
-  }
 
   Widget _buildOrderSummary(NumberFormat currencyFormat) {
     return Obx(() {

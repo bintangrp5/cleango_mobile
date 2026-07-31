@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart';
 import '../controllers/edit_profile_controller.dart';
 
 class EditProfileView extends GetView<EditProfileController> {
@@ -102,13 +104,48 @@ class EditProfileView extends GetView<EditProfileController> {
               const SizedBox(height: 20),
 
               // Form Alamat
-              const Text(
-                'Alamat Lengkap',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF0B1C30),
-                ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    'Alamat Lengkap',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF0B1C30),
+                    ),
+                  ),
+                  InkWell(
+                    onTap: controller.useCurrentLocation,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF0058BC).withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(24),
+                      ),
+                      child: Obx(() => Row(
+                        children: [
+                          if (controller.isLoadingLocation.value)
+                            const SizedBox(
+                              width: 14, height: 14,
+                              child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF0058BC)),
+                            )
+                          else
+                            const Icon(Icons.my_location, size: 14, color: Color(0xFF0058BC)),
+                          const SizedBox(width: 4),
+                          const Text(
+                            'Gunakan Lokasi Saat Ini',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF0058BC),
+                            ),
+                          ),
+                        ],
+                      )),
+                    ),
+                  ),
+                ],
               ),
               const SizedBox(height: 8),
               TextField(
@@ -125,6 +162,45 @@ class EditProfileView extends GetView<EditProfileController> {
                   ),
                 ),
               ),
+              Obx(() {
+                if (controller.currentLat.value != null && controller.currentLng.value != null) {
+                  return Container(
+                    margin: const EdgeInsets.only(top: 16),
+                    height: 200,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: const Color(0xFFC1C6D7), width: 1),
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                      child: FlutterMap(
+                        options: MapOptions(
+                          initialCenter: LatLng(controller.currentLat.value!, controller.currentLng.value!),
+                          initialZoom: 16.0,
+                        ),
+                        children: [
+                          TileLayer(
+                            urlTemplate: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png',
+                            subdomains: const ['a', 'b', 'c', 'd'],
+                            userAgentPackageName: 'com.example.cleango_mobile',
+                          ),
+                          MarkerLayer(
+                            markers: [
+                              Marker(
+                                point: LatLng(controller.currentLat.value!, controller.currentLng.value!),
+                                width: 40,
+                                height: 40,
+                                child: const Icon(Icons.location_on, color: Colors.red, size: 40),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                }
+                return const SizedBox.shrink();
+              }),
               const SizedBox(height: 48),
 
               // Tombol Simpan
