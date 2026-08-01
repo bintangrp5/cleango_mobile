@@ -14,6 +14,58 @@ class RegisterController extends GetxController {
   final passwordController = TextEditingController();
   final confirmPasswordController = TextEditingController();
 
+  final passwordStrength = ''.obs;
+  final passwordStrengthColor = Colors.transparent.obs;
+  final isPasswordValid = false.obs;
+
+  @override
+  void onInit() {
+    super.onInit();
+    passwordController.addListener(() {
+      _checkPasswordStrength(passwordController.text);
+    });
+  }
+
+  void _checkPasswordStrength(String password) {
+    if (password.isEmpty) {
+      passwordStrength.value = '';
+      passwordStrengthColor.value = Colors.transparent;
+      isPasswordValid.value = false;
+      return;
+    }
+
+    if (password.length < 8) {
+      passwordStrength.value = 'Lemah (Minimal 8 karakter)';
+      passwordStrengthColor.value = Colors.red;
+      isPasswordValid.value = false;
+      return;
+    }
+
+    bool hasUppercase = password.contains(RegExp(r'[A-Z]'));
+    bool hasLowercase = password.contains(RegExp(r'[a-z]'));
+    bool hasDigits = password.contains(RegExp(r'[0-9]'));
+    bool hasSpecialCharacters = password.contains(RegExp(r'[!@#$%^&*(),.?":{}|<>]'));
+
+    if (!hasUppercase || !hasLowercase) {
+      passwordStrength.value = 'Lemah (Butuh huruf besar & kecil)';
+      passwordStrengthColor.value = Colors.red;
+      isPasswordValid.value = false;
+      return;
+    }
+
+    isPasswordValid.value = true;
+    if (hasDigits && hasSpecialCharacters) {
+      passwordStrength.value = 'Sangat Kuat';
+      passwordStrengthColor.value = const Color(0xFF0058BC); // CleanGO Blue
+    } else if (hasDigits || hasSpecialCharacters) {
+      passwordStrength.value = 'Kuat';
+      passwordStrengthColor.value = Colors.green;
+    } else {
+      passwordStrength.value = 'Sedang';
+      passwordStrengthColor.value = Colors.orange;
+    }
+  }
+
   Future<void> register() async {
     final name = nameController.text.trim();
     final email = emailController.text.trim();
@@ -21,17 +73,22 @@ class RegisterController extends GetxController {
     final confirmPassword = confirmPasswordController.text.trim();
     
     if (name.isEmpty || email.isEmpty || password.isEmpty || confirmPassword.isEmpty) {
-      AppSnackbar.show('Error', 'Semua field wajib diisi');
+      AppSnackbar.show('Error', 'Semua field wajib diisi', isError: true);
       return;
     }
 
-    if (password.length < 8) {
-      AppSnackbar.show('Error', 'Kata Sandi minimal harus 8 karakter');
+    if (!GetUtils.isEmail(email)) {
+      AppSnackbar.show('Error', 'Format email tidak valid (harus mengandung @)', isError: true);
+      return;
+    }
+
+    if (!isPasswordValid.value) {
+      AppSnackbar.show('Error', 'Kata sandi Anda terlalu lemah. Pastikan minimal 8 karakter dan memiliki huruf besar & kecil.', isError: true);
       return;
     }
 
     if (password != confirmPassword) {
-      AppSnackbar.show('Error', 'Kata Sandi dan Konfirmasi Kata Sandi tidak cocok');
+      AppSnackbar.show('Error', 'Kata Sandi dan Konfirmasi Kata Sandi tidak cocok', isError: true);
       return;
     }
 
@@ -56,9 +113,9 @@ class RegisterController extends GetxController {
             errorMessage = e.response?.data['detail'] ?? 'Terjadi kesalahan saat registrasi';
         }
       }
-      AppSnackbar.show('Registrasi Gagal', errorMessage);
+      AppSnackbar.show('Registrasi Gagal', errorMessage, isError: true);
     } catch (e) {
-      AppSnackbar.show('Error', 'Terjadi kesalahan tidak terduga');
+      AppSnackbar.show('Error', 'Terjadi kesalahan tidak terduga', isError: true);
     } finally {
       isLoading.value = false;
     }

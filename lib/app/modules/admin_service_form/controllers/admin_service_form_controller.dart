@@ -55,8 +55,12 @@ class AdminServiceFormController extends GetxController {
   }
 
   Future<void> submit() async {
-    if (nameController.text.isEmpty || priceController.text.isEmpty) {
-      AppSnackbar.show('Error', 'Nama dan Harga harus diisi');
+    if (nameController.text.isEmpty || 
+        priceController.text.isEmpty || 
+        descController.text.isEmpty || 
+        durationController.text.isEmpty || 
+        imageController.text.isEmpty) {
+      AppSnackbar.show('Peringatan', 'Semua kolom (termasuk gambar) wajib diisi', isError: true);
       return;
     }
 
@@ -81,9 +85,9 @@ class AdminServiceFormController extends GetxController {
         "name": nameController.text,
         "description": descController.text,
         "price_per_kg": double.parse(priceController.text),
-        "estimated_duration": durationController.text.isNotEmpty ? durationController.text : "24",
+        "estimated_duration": durationController.text,
         "category": selectedCategory.value,
-        "image_url": finalImageUrl.isNotEmpty ? finalImageUrl : "https://placehold.co/100",
+        "image_url": finalImageUrl,
       };
 
       dynamic response;

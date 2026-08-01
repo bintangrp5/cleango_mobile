@@ -104,4 +104,18 @@ class AuthService extends GetxService {
     currentUser.value = null;
     Get.offAllNamed(Routes.LOGIN);
   }
+
+  Future<void> changePassword(String oldPassword, String newPassword) async {
+    try {
+      await dio.put('/auth/change-password', data: {
+        'old_password': oldPassword,
+        'new_password': newPassword,
+      });
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 400) {
+        throw Exception(e.response?.data['detail'] ?? 'Kata sandi lama salah');
+      }
+      throw Exception('Gagal mengubah kata sandi');
+    }
+  }
 }

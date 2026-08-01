@@ -11,6 +11,17 @@ class HomeController extends GetxController {
   final RxList<ServiceModel> services = <ServiceModel>[].obs;
   final RxBool isLoadingServices = false.obs;
 
+  final RxString searchQuery = ''.obs;
+
+  List<ServiceModel> get filteredServices {
+    if (searchQuery.value.isEmpty) {
+      return services;
+    }
+    return services.where((service) {
+      return service.name.toLowerCase().contains(searchQuery.value.toLowerCase());
+    }).toList();
+  }
+
   @override
   void onInit() {
     super.onInit();

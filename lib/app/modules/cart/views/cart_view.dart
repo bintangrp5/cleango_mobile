@@ -9,6 +9,7 @@ class CartView extends GetView<CartController> {
 
   @override
   Widget build(BuildContext context) {
+    Get.put(CartController());
     final currencyFormat = NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0);
 
     return Scaffold(

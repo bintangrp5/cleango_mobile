@@ -10,6 +10,7 @@ class HomeView extends GetView<HomeController> {
 
   @override
   Widget build(BuildContext context) {
+    Get.put(HomeController());
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FF),
       appBar: _buildAppBar(context),
@@ -20,11 +21,21 @@ class HomeView extends GetView<HomeController> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _buildGreetingSection(),
+              const SizedBox(height: 16),
+              _buildSearchBar(),
               const SizedBox(height: 24),
-              _buildPromoBanner(),
-              const SizedBox(height: 24),
-              _buildCategoriesSection(),
-              const SizedBox(height: 32),
+              Obx(() => controller.searchQuery.value.isNotEmpty 
+                ? const SizedBox.shrink()
+                : Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildPromoBanner(),
+                      const SizedBox(height: 24),
+                      _buildCategoriesSection(),
+                      const SizedBox(height: 32),
+                    ],
+                  )
+              ),
               _buildPopularServicesSection(),
               const SizedBox(height: 32),
               _buildEmptyState(),
@@ -92,18 +103,53 @@ class HomeView extends GetView<HomeController> {
     );
   }
 
+  Widget _buildSearchBar() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: const [
+          BoxShadow(
+            color: Colors.black12,
+            blurRadius: 10,
+            offset: Offset(0, 4),
+          ),
+        ],
+      ),
+      child: TextField(
+        onChanged: (value) => controller.searchQuery.value = value,
+        decoration: InputDecoration(
+          hintText: 'Cari layanan (misal: Setrika Saja)',
+          hintStyle: const TextStyle(color: Colors.grey, fontSize: 14),
+          prefixIcon: const Icon(Icons.search, color: Color(0xFF0058BC)),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(16),
+            borderSide: BorderSide.none,
+          ),
+          filled: true,
+          fillColor: Colors.white,
+          contentPadding: const EdgeInsets.symmetric(vertical: 14),
+        ),
+      ),
+    );
+  }
+
   Widget _buildPromoBanner() {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: const Color(0xFF0058BC),
-        borderRadius: BorderRadius.circular(16),
+        gradient: const LinearGradient(
+          colors: [Color(0xFF0058BC), Color(0xFF0084FF)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF0058BC).withValues(alpha: 0.2),
-            blurRadius: 12,
-            offset: const Offset(0, 6),
+            color: const Color(0xFF0058BC).withValues(alpha: 0.3),
+            blurRadius: 15,
+            offset: const Offset(0, 8),
           ),
         ],
       ),
@@ -114,57 +160,74 @@ class HomeView extends GetView<HomeController> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
                   color: Colors.white.withValues(alpha: 0.2),
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: Colors.white.withValues(alpha: 0.3), width: 1),
                 ),
-                child: const Text(
-                  'PENJEMPUTAN CEPAT, HASIL BERSIH',
-                  style: TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                    letterSpacing: 1.2,
-                  ),
+                child: const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.stars, color: Colors.amber, size: 14),
+                    SizedBox(width: 6),
+                    Text(
+                      'LAYANAN UNGGULAN',
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                        letterSpacing: 1.2,
+                      ),
+                    ),
+                  ],
                 ),
               ),
               const SizedBox(height: 16),
               const Text(
-                'Diskon 20%\nPesanan Pertama',
+                'Solusi Tepat\nCucian Numpuk',
                 style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
+                  fontSize: 26,
+                  fontWeight: FontWeight.w900,
                   color: Colors.white,
                   height: 1.2,
+                  letterSpacing: -0.5,
                 ),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 10),
               Text(
-                'Berikan pakaianmu perawatan terbaik.',
+                'Pakaian bersih & wangi, dompet tetap aman. Bebas repot!',
                 style: TextStyle(
                   fontSize: 14,
-                  color: Colors.white.withValues(alpha: 0.8),
+                  color: Colors.white.withValues(alpha: 0.9),
+                  height: 1.4,
                 ),
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 24),
               ElevatedButton(
-                onPressed: () {},
+                onPressed: () => Get.toNamed(Routes.SERVICES),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.white,
                   foregroundColor: const Color(0xFF0058BC),
-                  elevation: 2,
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                  elevation: 4,
+                  padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 14),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(24),
+                    borderRadius: BorderRadius.circular(30),
                   ),
                 ),
-                child: const Text(
-                  'Klaim Sekarang',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                  ),
+                child: const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      'Pesan Sekarang',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    SizedBox(width: 8),
+                    Icon(Icons.arrow_forward_rounded, size: 16),
+                  ],
                 ),
               ),
             ],
@@ -173,12 +236,12 @@ class HomeView extends GetView<HomeController> {
             right: -30,
             bottom: -20,
             child: Opacity(
-              opacity: 0.2,
+              opacity: 0.15,
               child: Transform.rotate(
-                angle: 0.2,
+                angle: -0.2,
                 child: const Icon(
-                  Icons.checkroom,
-                  size: 140,
+                  Icons.local_laundry_service,
+                  size: 160,
                   color: Colors.white,
                 ),
               ),
@@ -276,7 +339,17 @@ class HomeView extends GetView<HomeController> {
         return const Center(child: Text('Tidak ada layanan tersedia.'));
       }
 
-      final displayServices = controller.services.take(3).toList();
+      final isSearching = controller.searchQuery.value.isNotEmpty;
+      final displayServices = isSearching 
+          ? controller.filteredServices 
+          : controller.services.take(3).toList();
+
+      if (displayServices.isEmpty) {
+        return const Center(child: Padding(
+          padding: EdgeInsets.all(16.0),
+          child: Text('Layanan tidak ditemukan.'),
+        ));
+      }
 
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -284,25 +357,26 @@ class HomeView extends GetView<HomeController> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
-                'Layanan Populer',
-                style: TextStyle(
+              Text(
+                isSearching ? 'Hasil Pencarian' : 'Layanan Populer',
+                style: const TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
                   color: Color(0xFF0B1C30),
                 ),
               ),
-              GestureDetector(
-                onTap: () => Get.toNamed(Routes.SERVICES),
-                child: const Text(
-                  'Lihat Semua',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF0058BC),
+              if (!isSearching)
+                GestureDetector(
+                  onTap: () => Get.toNamed(Routes.SERVICES),
+                  child: const Text(
+                    'Lihat Semua',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF0058BC),
+                    ),
                   ),
                 ),
-              ),
             ],
           ),
           const SizedBox(height: 16),
@@ -316,40 +390,41 @@ class HomeView extends GetView<HomeController> {
                   title: service.name,
                   subtitle: '${service.description ?? ''} • Selesai ${service.estimatedDuration}',
                   price: '${formatCurrency.format(service.pricePerKg)} /kg',
-                  imageUrl: service.imageUrl ?? 'https://images.unsplash.com/photo-1517677208171-0bc6725a3e60?w=200',
+                  imageUrl: service.displayImageUrl,
                   badge: 'TERLARIS',
                 ),
               ),
             );
           }),
           const SizedBox(height: 12),
-          OutlinedButton(
-            onPressed: () => Get.toNamed(Routes.SERVICES),
-            style: OutlinedButton.styleFrom(
-              minimumSize: const Size(double.infinity, 56),
-              backgroundColor: const Color(0xFF0070EB),
-              side: BorderSide.none,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-              ),
-              elevation: 2,
-            ),
-            child: const Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  'Lihat Semua Layanan',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
+          if (!isSearching)
+            OutlinedButton(
+              onPressed: () => Get.toNamed(Routes.SERVICES),
+              style: OutlinedButton.styleFrom(
+                minimumSize: const Size(double.infinity, 56),
+                backgroundColor: const Color(0xFF0070EB),
+                side: BorderSide.none,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
                 ),
-                SizedBox(width: 8),
-                Icon(Icons.arrow_forward, color: Colors.white, size: 20),
-              ],
+                elevation: 2,
+              ),
+              child: const Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    'Lihat Semua Layanan',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                  SizedBox(width: 8),
+                  Icon(Icons.arrow_forward, color: Colors.white, size: 20),
+                ],
+              ),
             ),
-          ),
         ],
       );
     });

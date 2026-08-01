@@ -8,6 +8,7 @@ class OrderTrackingView extends GetView<OrderTrackingController> {
 
   @override
   Widget build(BuildContext context) {
+    Get.put(OrderTrackingController());
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FF),
       appBar: _buildAppBar(context),

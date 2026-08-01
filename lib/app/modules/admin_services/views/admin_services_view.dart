@@ -79,19 +79,23 @@ class AdminServicesView extends GetView<AdminServicesController> {
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            if (service.imageUrl != null && service.imageUrl!.isNotEmpty)
-                              ClipRRect(
-                                borderRadius: BorderRadius.circular(12),
-                                child: Image.network(
-                                  service.imageUrl!, 
-                                  height: 150, 
-                                  width: 300, 
-                                  fit: BoxFit.cover,
-                                  errorBuilder: (context, error, stackTrace) => const Icon(Icons.broken_image, size: 50, color: Colors.grey),
-                                ),
-                              )
-                            else
-                              const Icon(Icons.local_laundry_service, size: 80, color: Color(0xFF0058BC)),
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(12),
+                              child: Image.network(
+                                service.displayImageUrl,
+                                height: 150, 
+                                width: 300, 
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) {
+                                  return Container(
+                                    height: 150,
+                                    width: 300,
+                                    color: Colors.grey[200],
+                                    child: const Icon(Icons.image_not_supported, color: Colors.grey, size: 50),
+                                  );
+                                },
+                              ),
+                            ),
                             const SizedBox(height: 16),
                             Text(service.description ?? 'Tidak ada deskripsi.', textAlign: TextAlign.center, style: const TextStyle(fontSize: 14)),
                             const SizedBox(height: 16),
@@ -131,14 +135,19 @@ class AdminServicesView extends GetView<AdminServicesController> {
                             color: const Color(0xFFE5EEFF),
                             borderRadius: BorderRadius.circular(12),
                           ),
-                          child: service.imageUrl != null && service.imageUrl!.isNotEmpty
-                              ? ClipRRect(
-                                  borderRadius: BorderRadius.circular(12),
-                                  child: Image.network(service.imageUrl!, fit: BoxFit.cover,
-                                    errorBuilder: (context, error, stackTrace) => const Icon(Icons.broken_image, color: Colors.grey),
-                                  ),
-                                )
-                              : const Icon(Icons.local_laundry_service, color: Color(0xFF0058BC), size: 30),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(12),
+                            child: Image.network(
+                              service.displayImageUrl,
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) {
+                                return Container(
+                                  color: Colors.grey[200],
+                                  child: const Icon(Icons.image_not_supported, color: Colors.grey),
+                                );
+                              },
+                            ),
+                          ),
                         ),
                         const SizedBox(width: 16),
                         Expanded(

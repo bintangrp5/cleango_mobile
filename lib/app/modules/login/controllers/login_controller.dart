@@ -18,7 +18,12 @@ class LoginController extends GetxController {
     final password = passwordController.text.trim();
     
     if (email.isEmpty || password.isEmpty) {
-      AppSnackbar.show('Error', 'Silakan isi email dan kata sandi');
+      AppSnackbar.show('Error', 'Silakan isi email dan kata sandi', isError: true);
+      return;
+    }
+
+    if (!GetUtils.isEmail(email)) {
+      AppSnackbar.show('Error', 'Format email tidak valid (harus mengandung @)', isError: true);
       return;
     }
 
@@ -39,9 +44,9 @@ class LoginController extends GetxController {
       if (e.response != null) {
         errorMessage = e.response?.data['detail'] ?? 'Email atau kata sandi salah';
       }
-      AppSnackbar.show('Login Gagal', errorMessage);
+      AppSnackbar.show('Login Gagal', errorMessage, isError: true);
     } catch (e) {
-      AppSnackbar.show('Error', 'Gagal menghubungi server');
+      AppSnackbar.show('Error', 'Gagal menghubungi server', isError: true);
     } finally {
       isLoading.value = false;
     }

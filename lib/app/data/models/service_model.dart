@@ -9,6 +9,25 @@ class ServiceModel {
   final String? iconName;
   final String category;
 
+  String get displayImageUrl {
+    if (imageUrl != null && imageUrl!.trim().isNotEmpty) {
+      return imageUrl!;
+    }
+    
+    final nameLower = name.toLowerCase();
+    if (nameLower.contains('sepatu')) {
+      return 'https://images.unsplash.com/photo-1600185365926-3a2ce3cdb9eb?w=500&q=80'; // sepatu
+    } else if (nameLower.contains('karpet') || nameLower.contains('ambal')) {
+      return 'https://images.unsplash.com/photo-1558904541-efa843a96f09?w=500&q=80'; // karpet
+    } else if (nameLower.contains('selimut') || nameLower.contains('bedcover')) {
+      return 'https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?w=500&q=80'; // selimut
+    } else if (nameLower.contains('setrika')) {
+      return 'https://images.unsplash.com/photo-1517677208171-0bc6725a3e60?w=500&q=80'; // setrika
+    }
+    // Default keranjang laundry
+    return 'https://images.unsplash.com/photo-1545173168-9f1947eebb7f?w=500&q=80';
+  }
+
   ServiceModel({
     required this.id,
     required this.name,

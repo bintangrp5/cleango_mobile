@@ -17,14 +17,16 @@ class ServicesView extends GetView<ServicesController> {
         child: Column(
           children: [
             _buildHeader(),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 8.0),
+              child: _buildSearchBar(),
+            ),
             _buildCategoryFilters(),
             Expanded(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.all(20.0),
                 child: Column(
                   children: [
-                    _buildPromoCard(),
-                    const SizedBox(height: 24),
                     _buildServicesList(),
                     const SizedBox(height: 48),
                   ],
@@ -102,6 +104,37 @@ class ServicesView extends GetView<ServicesController> {
     );
   }
 
+  Widget _buildSearchBar() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: const [
+          BoxShadow(
+            color: Colors.black12,
+            blurRadius: 10,
+            offset: Offset(0, 4),
+          ),
+        ],
+      ),
+      child: TextField(
+        onChanged: (value) => controller.searchQuery.value = value,
+        decoration: InputDecoration(
+          hintText: 'Cari layanan (misal: Setrika Saja)',
+          hintStyle: const TextStyle(color: Colors.grey, fontSize: 14),
+          prefixIcon: const Icon(Icons.search, color: Color(0xFF0058BC)),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(16),
+            borderSide: BorderSide.none,
+          ),
+          filled: true,
+          fillColor: Colors.white,
+          contentPadding: const EdgeInsets.symmetric(vertical: 14),
+        ),
+      ),
+    );
+  }
+
   Widget _buildCategoryFilters() {
     final categories = ['Semua', 'Reguler', 'Setrika Saja', 'Ekspres', 'Premium'];
 
@@ -147,115 +180,44 @@ class ServicesView extends GetView<ServicesController> {
     );
   }
 
-  Widget _buildPromoCard() {
-    return Container(
-      width: double.infinity,
-      height: 160,
-      decoration: BoxDecoration(
-        color: const Color(0xFF0070EB),
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: const [
-          BoxShadow(
-            color: Colors.black12,
-            blurRadius: 8,
-            offset: Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Stack(
-        children: [
-          // Background graphic
-          Positioned(
-            right: -20,
-            top: -20,
-            child: Container(
-              width: 128,
-              height: 128,
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.1),
-                shape: BoxShape.circle,
-              ),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Row(
-              children: [
-                Expanded(
-                  flex: 6,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFFFDBCC),
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        child: const Text(
-                          'PROMO MINGGU INI',
-                          style: TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF351000),
-                            letterSpacing: 1.0,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      const Text(
-                        'Diskon 20%\nCuci Karpet',
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                          height: 1.2,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Berlaku hingga 25 Okt 2023. Bersihkan rumah, hemat biaya.',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.white.withValues(alpha: 0.8),
-                        ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
-                  ),
-                ),
-                Expanded(
-                  flex: 4,
-                  child: Center(
-                    child: Icon(
-                      Icons.dry_cleaning_outlined,
-                      size: 80,
-                      color: Colors.white.withValues(alpha: 0.4),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildServicesList() {
     return Obx(() {
-      final services = controller.filteredServices;
+      final services = controller.paginatedServices;
 
       if (services.isEmpty) {
         return _buildEmptyState();
       }
 
       return Column(
-        children: services.map((service) => _buildServiceItem(service)).toList(),
+        children: [
+          ...services.map((service) => _buildServiceItem(service)).toList(),
+          if (controller.totalPages > 1) _buildPaginationControls(),
+        ],
       );
     });
+  }
+
+  Widget _buildPaginationControls() {
+    return Padding(
+      padding: const EdgeInsets.only(top: 16.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          IconButton(
+            onPressed: controller.currentPage.value > 1 ? controller.previousPage : null,
+            icon: Icon(Icons.chevron_left, color: controller.currentPage.value > 1 ? const Color(0xFF0058BC) : Colors.grey),
+          ),
+          Text(
+            'Halaman ${controller.currentPage.value} dari ${controller.totalPages}',
+            style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF414755)),
+          ),
+          IconButton(
+            onPressed: controller.currentPage.value < controller.totalPages ? controller.nextPage : null,
+            icon: Icon(Icons.chevron_right, color: controller.currentPage.value < controller.totalPages ? const Color(0xFF0058BC) : Colors.grey),
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _buildServiceItem(ServiceModel service) {
@@ -295,7 +257,7 @@ class ServicesView extends GetView<ServicesController> {
                       : ClipRRect(
                           borderRadius: BorderRadius.circular(12),
                           child: Image.network(
-                            service.imageUrl ?? 'https://images.unsplash.com/photo-1517677208171-0bc6725a3e60?w=200',
+                            service.displayImageUrl,
                             fit: BoxFit.cover,
                           ),
                         ),

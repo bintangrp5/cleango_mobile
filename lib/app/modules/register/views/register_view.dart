@@ -87,7 +87,36 @@ class RegisterView extends GetView<RegisterController> {
 
                   // Password Input
                   _buildPasswordField('Kata Sandi', controller.passwordController),
-                  const SizedBox(height: 20),
+                  
+                  Obx(() {
+                    if (controller.passwordStrength.value.isEmpty) {
+                      return const SizedBox.shrink();
+                    }
+                    return Padding(
+                      padding: const EdgeInsets.only(top: 8, left: 4, bottom: 4),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.only(top: 2),
+                            child: Icon(Icons.shield_outlined, size: 14, color: controller.passwordStrengthColor.value),
+                          ),
+                          const SizedBox(width: 4),
+                          Expanded(
+                            child: Text(
+                              'Kekuatan Sandi: ${controller.passwordStrength.value}',
+                              style: TextStyle(
+                                color: controller.passwordStrengthColor.value,
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }),
+                  const SizedBox(height: 12),
                   
                   // Confirm Password Input
                   _buildPasswordField('Konfirmasi Kata Sandi', controller.confirmPasswordController),

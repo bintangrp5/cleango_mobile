@@ -17,6 +17,59 @@ class ProfileController extends GetxController {
   }
 
   void changePassword() {
+    final oldPasswordCtrl = TextEditingController();
+    final newPasswordCtrl = TextEditingController();
+    final confirmPasswordCtrl = TextEditingController();
+    final isLoading = false.obs;
+
+    final passwordStrength = ''.obs;
+    final passwordStrengthColor = Colors.transparent.obs;
+    final isPasswordValid = false.obs;
+
+    void checkPasswordStrength(String password) {
+      if (password.isEmpty) {
+        passwordStrength.value = '';
+        passwordStrengthColor.value = Colors.transparent;
+        isPasswordValid.value = false;
+        return;
+      }
+
+      if (password.length < 8) {
+        passwordStrength.value = 'Lemah (Minimal 8 karakter)';
+        passwordStrengthColor.value = Colors.red;
+        isPasswordValid.value = false;
+        return;
+      }
+
+      bool hasUppercase = password.contains(RegExp(r'[A-Z]'));
+      bool hasLowercase = password.contains(RegExp(r'[a-z]'));
+      bool hasDigits = password.contains(RegExp(r'[0-9]'));
+      bool hasSpecialCharacters = password.contains(RegExp(r'[!@#$%^&*(),.?":{}|<>]'));
+
+      if (!hasUppercase || !hasLowercase) {
+        passwordStrength.value = 'Lemah (Butuh huruf besar & kecil)';
+        passwordStrengthColor.value = Colors.red;
+        isPasswordValid.value = false;
+        return;
+      }
+
+      isPasswordValid.value = true;
+      if (hasDigits && hasSpecialCharacters) {
+        passwordStrength.value = 'Sangat Kuat';
+        passwordStrengthColor.value = const Color(0xFF0058BC); // CleanGO Blue
+      } else if (hasDigits || hasSpecialCharacters) {
+        passwordStrength.value = 'Kuat';
+        passwordStrengthColor.value = Colors.green;
+      } else {
+        passwordStrength.value = 'Sedang';
+        passwordStrengthColor.value = Colors.orange;
+      }
+    }
+
+    newPasswordCtrl.addListener(() {
+      checkPasswordStrength(newPasswordCtrl.text);
+    });
+
     Get.bottomSheet(
       Container(
         padding: const EdgeInsets.all(24),
@@ -49,18 +102,72 @@ class ProfileController extends GetxController {
                 ),
               ),
               const SizedBox(height: 24),
-              _buildPasswordField('Kata Sandi Lama'),
+              _buildPasswordField('Kata Sandi Lama', true.obs, oldPasswordCtrl),
               const SizedBox(height: 16),
-              _buildPasswordField('Kata Sandi Baru'),
-              const SizedBox(height: 16),
-              _buildPasswordField('Konfirmasi Kata Sandi Baru'),
+              _buildPasswordField('Kata Sandi Baru', true.obs, newPasswordCtrl),
+              
+              Obx(() {
+                if (passwordStrength.value.isEmpty) {
+                  return const SizedBox.shrink();
+                }
+                return Padding(
+                  padding: const EdgeInsets.only(top: 8, left: 4, bottom: 4),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.only(top: 2),
+                        child: Icon(Icons.shield_outlined, size: 14, color: passwordStrengthColor.value),
+                      ),
+                      const SizedBox(width: 4),
+                      Expanded(
+                        child: Text(
+                          'Kekuatan Sandi: ${passwordStrength.value}',
+                          style: TextStyle(
+                            color: passwordStrengthColor.value,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }),
+              const SizedBox(height: 12),
+              _buildPasswordField('Konfirmasi Kata Sandi Baru', true.obs, confirmPasswordCtrl),
               const SizedBox(height: 32),
               SizedBox(
                 width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () {
-                    Get.back();
-                    AppSnackbar.show('Sukses', 'Kata sandi berhasil diubah');
+                child: Obx(() => ElevatedButton(
+                  onPressed: isLoading.value ? null : () async {
+                    final oldP = oldPasswordCtrl.text.trim();
+                    final newP = newPasswordCtrl.text.trim();
+                    final confP = confirmPasswordCtrl.text.trim();
+                    
+                    if (oldP.isEmpty || newP.isEmpty || confP.isEmpty) {
+                      AppSnackbar.show('Error', 'Semua kolom harus diisi', isError: true);
+                      return;
+                    }
+                    if (newP != confP) {
+                      AppSnackbar.show('Error', 'Konfirmasi sandi tidak cocok', isError: true);
+                      return;
+                    }
+                    if (!isPasswordValid.value) {
+                      AppSnackbar.show('Error', 'Kata sandi Anda terlalu lemah. Pastikan minimal 8 karakter dan memiliki huruf besar & kecil.', isError: true);
+                      return;
+                    }
+                    
+                    isLoading.value = true;
+                    try {
+                      await authService.changePassword(oldP, newP);
+                      Get.back();
+                      AppSnackbar.show('Sukses', 'Kata sandi berhasil diubah');
+                    } catch (e) {
+                      AppSnackbar.show('Error', e.toString().replaceAll('Exception: ', ''), isError: true);
+                    } finally {
+                      isLoading.value = false;
+                    }
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF0058BC),
@@ -70,11 +177,13 @@ class ProfileController extends GetxController {
                     ),
                     elevation: 0,
                   ),
-                  child: const Text(
-                    'Simpan Kata Sandi',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
-                  ),
-                ),
+                  child: isLoading.value 
+                      ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                      : const Text(
+                          'Simpan Kata Sandi',
+                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
+                        ),
+                )),
               ),
               const SizedBox(height: 16),
             ],
@@ -86,14 +195,21 @@ class ProfileController extends GetxController {
     );
   }
 
-  Widget _buildPasswordField(String label) {
-    return TextField(
-      obscureText: true,
+  Widget _buildPasswordField(String label, RxBool isObscure, TextEditingController ctrl) {
+    return Obx(() => TextField(
+      controller: ctrl,
+      obscureText: isObscure.value,
       decoration: InputDecoration(
         labelText: label,
         labelStyle: const TextStyle(color: Color(0xFF414755)),
         prefixIcon: const Icon(Icons.lock_outline, color: Color(0xFF414755)),
-        suffixIcon: const Icon(Icons.visibility_off, color: Color(0xFF414755)),
+        suffixIcon: IconButton(
+          icon: Icon(
+            isObscure.value ? Icons.visibility_off : Icons.visibility,
+            color: const Color(0xFF414755),
+          ),
+          onPressed: () => isObscure.toggle(),
+        ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
           borderSide: BorderSide(color: Colors.grey.shade300),
@@ -105,7 +221,7 @@ class ProfileController extends GetxController {
         filled: true,
         fillColor: const Color(0xFFF8F9FF),
       ),
-    );
+    ));
   }
 
   void logout() {
