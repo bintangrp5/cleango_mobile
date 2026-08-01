@@ -5,6 +5,7 @@ import 'package:fl_chart/fl_chart.dart';
 import '../controllers/admin_dashboard_controller.dart';
 import '../../../data/models/order_model.dart';
 import '../../../widgets/admin_drawer.dart';
+import '../../../routes/app_pages.dart';
 
 class AdminDashboardView extends GetView<AdminDashboardController> {
   const AdminDashboardView({super.key});
@@ -51,9 +52,18 @@ class AdminDashboardView extends GetView<AdminDashboardController> {
       elevation: 1,
       shadowColor: Colors.black12,
       iconTheme: const IconThemeData(color: Color(0xFF0058BC)),
-      title: Obx(() => Row(
-        children: [
-          CircleAvatar(
+      title: const Text(
+        'Admin CleanGO',
+        style: TextStyle(
+          fontSize: 20,
+          fontWeight: FontWeight.bold,
+          color: Color(0xFF0058BC),
+        ),
+      ),
+      actions: [
+        Obx(() => Padding(
+          padding: const EdgeInsets.only(right: 20.0),
+          child: CircleAvatar(
             radius: 16,
             backgroundColor: const Color(0xFF0058BC),
             child: Text(
@@ -61,17 +71,8 @@ class AdminDashboardView extends GetView<AdminDashboardController> {
               style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
             ),
           ),
-          const SizedBox(width: 12),
-          const Text(
-            'Admin Hub',
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: Color(0xFF0058BC),
-            ),
-          ),
-        ],
-      )),
+        )),
+      ],
       // Removed actions to let user use drawer instead
     );
   }
@@ -303,7 +304,7 @@ class AdminDashboardView extends GetView<AdminDashboardController> {
           ),
         ),
         TextButton(
-          onPressed: () {},
+          onPressed: () => Get.toNamed(Routes.ADMIN_ORDERS),
           child: const Text('Lihat Semua', style: TextStyle(color: Color(0xFF0058BC))),
         ),
       ],
@@ -322,7 +323,9 @@ class AdminDashboardView extends GetView<AdminDashboardController> {
   }
 
   Widget _buildOrderCard(OrderModel order) {
-    return Container(
+    return GestureDetector(
+      onTap: () => _showOrderDetailsDialog(Get.context!, order),
+      child: Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -352,8 +355,10 @@ class AdminDashboardView extends GetView<AdminDashboardController> {
           ),
         ],
       ),
+      ),
     );
   }
+
 
   Widget _buildStatusDropdown(OrderModel order) {
     return Container(
@@ -379,8 +384,7 @@ class AdminDashboardView extends GetView<AdminDashboardController> {
             'Dijemput',
             'Diproses',
             'Diantar',
-            'Selesai',
-            'Dibatalkan'
+            'Selesai'
           ].map<DropdownMenuItem<String>>((String value) {
             return DropdownMenuItem<String>(
               value: value,
@@ -389,6 +393,83 @@ class AdminDashboardView extends GetView<AdminDashboardController> {
           }).toList(),
         ),
       ),
+    );
+  }
+
+  void _showOrderDetailsDialog(BuildContext context, OrderModel order) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          child: Container(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Rincian Pesanan #${order.orderNumber}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                const SizedBox(height: 8),
+                Text('Pelanggan: ${order.customerName}', style: const TextStyle(fontSize: 14)),
+                Text('No HP: ${order.phoneNumber}', style: const TextStyle(fontSize: 14)),
+                const Divider(height: 24),
+                const Text('Layanan:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                const SizedBox(height: 8),
+                ...order.items.map((item) => Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              '${item.serviceName} (${item.weightKg} kg)', 
+                              style: const TextStyle(fontSize: 14),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            Text(
+                              '${NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0).format(item.pricePerKg)} / kg', 
+                              style: const TextStyle(fontSize: 12, color: Colors.grey),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Text(
+                        NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0).format(item.subtotal), 
+                        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold)
+                      ),
+                    ],
+                  ),
+                )),
+                const Divider(height: 24),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text('Total Pembayaran', style: TextStyle(fontWeight: FontWeight.bold)),
+                    Text(
+                      NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0).format(order.totalPrice), 
+                      style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.green)
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 24),
+                ElevatedButton(
+                  onPressed: () => Navigator.pop(context),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF0058BC),
+                    foregroundColor: Colors.white,
+                    minimumSize: const Size(double.infinity, 44)
+                  ),
+                  child: const Text('Tutup'),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 }

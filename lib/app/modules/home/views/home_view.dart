@@ -40,17 +40,6 @@ class HomeView extends GetView<HomeController> {
     return AppBar(
       backgroundColor: const Color(0xFFF8F9FF).withValues(alpha: 0.9),
       elevation: 0,
-      leading: Obx(() => Padding(
-        padding: const EdgeInsets.only(left: 20.0),
-        child: CircleAvatar(
-          radius: 16,
-          backgroundColor: const Color(0xFF0058BC),
-          child: Text(
-            controller.authService.userInitials,
-            style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
-          ),
-        ),
-      )),
       title: const Text(
         'Beranda',
         style: TextStyle(
@@ -60,7 +49,19 @@ class HomeView extends GetView<HomeController> {
         ),
       ),
       centerTitle: true,
-      actions: const [],
+      actions: [
+        Obx(() => Padding(
+          padding: const EdgeInsets.only(right: 20.0),
+          child: CircleAvatar(
+            radius: 16,
+            backgroundColor: const Color(0xFF0058BC),
+            child: Text(
+              controller.authService.userInitials,
+              style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
+            ),
+          ),
+        )),
+      ],
     );
   }
 

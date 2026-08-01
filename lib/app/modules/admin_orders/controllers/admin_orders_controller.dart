@@ -60,6 +60,29 @@ class AdminOrdersController extends GetxController {
   }
 
   Future<void> updateOrderStatus(String orderId, String newStatus) async {
+    final index = orders.indexWhere((o) => o.id == orderId);
+    if (index == -1) return;
+    
+    final orderNumber = orders[index].orderNumber;
+    final oldStatus = orders[index].status;
+    
+    // Optimistic update
+    orders[index] = OrderModel(
+      id: orders[index].id,
+      orderNumber: orders[index].orderNumber,
+      customerName: orders[index].customerName,
+      phoneNumber: orders[index].phoneNumber,
+      address: orders[index].address,
+      totalPrice: orders[index].totalPrice,
+      status: newStatus,
+      createdAt: orders[index].createdAt,
+      latitude: orders[index].latitude,
+      longitude: orders[index].longitude,
+      items: orders[index].items,
+    );
+    orders.refresh();
+    filterOrders();
+
     try {
       final response = await authService.dio.patch(
         '/orders/admin/$orderId/status',
@@ -67,10 +90,43 @@ class AdminOrdersController extends GetxController {
       );
 
       if (response.statusCode == 200) {
-        AppSnackbar.show('Sukses', 'Status pesanan #$orderId diperbarui');
-        fetchAllOrders();
+        AppSnackbar.show('Sukses', 'Status pesanan #$orderNumber diperbarui');
+      } else {
+        // Revert
+        orders[index] = OrderModel(
+          id: orders[index].id,
+          orderNumber: orders[index].orderNumber,
+          customerName: orders[index].customerName,
+          phoneNumber: orders[index].phoneNumber,
+          address: orders[index].address,
+          totalPrice: orders[index].totalPrice,
+          status: oldStatus,
+          createdAt: orders[index].createdAt,
+          latitude: orders[index].latitude,
+          longitude: orders[index].longitude,
+          items: orders[index].items,
+        );
+        orders.refresh();
+        filterOrders();
+        AppSnackbar.show('Error', 'Gagal memperbarui status');
       }
     } on DioException {
+      // Revert
+      orders[index] = OrderModel(
+        id: orders[index].id,
+        orderNumber: orders[index].orderNumber,
+        customerName: orders[index].customerName,
+        phoneNumber: orders[index].phoneNumber,
+        address: orders[index].address,
+        totalPrice: orders[index].totalPrice,
+        status: oldStatus,
+        createdAt: orders[index].createdAt,
+        latitude: orders[index].latitude,
+        longitude: orders[index].longitude,
+        items: orders[index].items,
+      );
+      orders.refresh();
+      filterOrders();
       AppSnackbar.show('Error', 'Gagal memperbarui status');
     }
   }

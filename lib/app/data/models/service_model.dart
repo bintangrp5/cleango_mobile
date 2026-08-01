@@ -7,6 +7,7 @@ class ServiceModel {
   final String? imageUrl;
   final bool isActive;
   final String? iconName;
+  final String category;
 
   ServiceModel({
     required this.id,
@@ -17,6 +18,7 @@ class ServiceModel {
     this.imageUrl,
     required this.isActive,
     this.iconName,
+    this.category = 'Reguler',
   });
 
   factory ServiceModel.fromJson(Map<String, dynamic> json) {
@@ -30,6 +32,7 @@ class ServiceModel {
       imageUrl: json['image_url']?.toString(),
       isActive: json['is_active'] ?? true,
       iconName: json['icon_name']?.toString(),
+      category: json['category']?.toString() ?? 'Reguler',
     );
   }
 
@@ -43,6 +46,7 @@ class ServiceModel {
       'image_url': imageUrl,
       'is_active': isActive,
       'icon_name': iconName,
+      'category': category,
     };
   }
 }

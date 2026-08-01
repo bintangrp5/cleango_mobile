@@ -75,6 +75,30 @@ class AdminServiceFormView extends GetView<AdminServiceFormController> {
             ),
             const SizedBox(height: 16),
             const Text(
+              'Kategori Layanan',
+              style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Color(0xFF0B1C30)),
+            ),
+            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.grey.shade300),
+              ),
+              child: Obx(() => DropdownButtonHideUnderline(
+                child: DropdownButton<String>(
+                  value: controller.selectedCategory.value,
+                  isExpanded: true,
+                  items: controller.categories.map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(),
+                  onChanged: (val) {
+                    if (val != null) controller.selectedCategory.value = val;
+                  },
+                ),
+              )),
+            ),
+            const SizedBox(height: 16),
+            const Text(
               'Gambar Layanan',
               style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Color(0xFF0B1C30)),
             ),

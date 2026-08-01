@@ -110,6 +110,18 @@ class AdminServicesController extends GetxController {
     }
   }
 
+  Future<void> deleteService(String id) async {
+    try {
+      final response = await authService.dio.delete('/services/$id');
+      if (response.statusCode == 200 || response.statusCode == 204) {
+        AppSnackbar.show('Sukses', 'Layanan berhasil dihapus');
+        fetchServices();
+      }
+    } on DioException {
+      AppSnackbar.show('Error', 'Gagal menghapus layanan. Mungkin layanan sedang digunakan.');
+    }
+  }
+
   @override
   void onClose() {
     nameController.dispose();

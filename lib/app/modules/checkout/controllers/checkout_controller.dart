@@ -206,7 +206,7 @@ class CheckoutController extends GetxController {
         await Future.delayed(const Duration(seconds: 2));
         Get.back(); // Close success dialog
         
-        Get.offAllNamed('/order-tracking');
+        Get.offAllNamed('/dashboard', arguments: {'tab': 1});
       }
     } on DioException catch (e) {
       Get.back(); // Close loading dialog

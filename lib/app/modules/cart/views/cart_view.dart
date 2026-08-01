@@ -13,7 +13,7 @@ class CartView extends GetView<CartController> {
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FF),
-      appBar: _buildAppBar(),
+      appBar: _buildAppBar(context),
       body: SafeArea(
         child: Column(
           children: [
@@ -43,7 +43,8 @@ class CartView extends GetView<CartController> {
     );
   }
 
-  PreferredSizeWidget _buildAppBar() {
+  PreferredSizeWidget _buildAppBar(BuildContext context) {
+    final canPop = Navigator.of(context).canPop();
     return AppBar(
       backgroundColor: const Color(0xFFF8F9FF).withValues(alpha: 0.9),
       elevation: 0,
@@ -56,11 +57,10 @@ class CartView extends GetView<CartController> {
         ),
       ),
       centerTitle: true,
-      leadingWidth: 80,
-      leading: Obx(() => Row(
-        children: [
-          const BackButton(color: Color(0xFF0B1C30)),
-          CircleAvatar(
+      actions: [
+        Obx(() => Padding(
+          padding: const EdgeInsets.only(right: 20.0),
+          child: CircleAvatar(
             radius: 16,
             backgroundColor: const Color(0xFF0058BC),
             child: Text(
@@ -68,9 +68,8 @@ class CartView extends GetView<CartController> {
               style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
             ),
           ),
-        ],
-      )),
-      actions: const [],
+        )),
+      ],
     );
   }
 

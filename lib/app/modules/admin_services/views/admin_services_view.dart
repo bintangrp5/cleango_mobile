@@ -4,6 +4,7 @@ import '../controllers/admin_services_controller.dart';
 import 'package:intl/intl.dart';
 import '../../../widgets/admin_drawer.dart';
 import '../../../routes/app_pages.dart';
+import '../../../data/models/service_model.dart';
 
 class AdminServicesView extends GetView<AdminServicesController> {
   const AdminServicesView({super.key});
@@ -38,9 +39,25 @@ class AdminServicesView extends GetView<AdminServicesController> {
         }
 
         return ListView.builder(
-          padding: const EdgeInsets.all(16),
-          itemCount: controller.services.length,
+          padding: const EdgeInsets.only(left: 16, right: 16, top: 16, bottom: 32),
+          itemCount: controller.services.length + 1,
           itemBuilder: (context, index) {
+            if (index == controller.services.length) {
+              return Padding(
+                padding: const EdgeInsets.only(top: 8.0, bottom: 32.0),
+                child: ElevatedButton.icon(
+                  onPressed: () => Get.toNamed(Routes.ADMIN_SERVICE_FORM),
+                  icon: const Icon(Icons.add, color: Colors.white),
+                  label: const Text('Tambah Layanan', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF0058BC),
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    elevation: 2,
+                  ),
+                ),
+              );
+            }
             final service = controller.services[index];
             return Container(
               margin: const EdgeInsets.only(bottom: 12),
@@ -90,7 +107,7 @@ class AdminServicesView extends GetView<AdminServicesController> {
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
                                 const Text('Estimasi:', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey)),
-                                Text('${service.estimatedDuration} jam', style: const TextStyle(fontWeight: FontWeight.bold)),
+                                Text(service.estimatedDuration, style: const TextStyle(fontWeight: FontWeight.bold)),
                               ],
                             ),
                           ],
@@ -150,9 +167,23 @@ class AdminServicesView extends GetView<AdminServicesController> {
                                 controller.toggleServiceStatus(service.id, service.isActive);
                               },
                             ),
-                            IconButton(
-                              icon: const Icon(Icons.edit, color: Colors.grey, size: 20),
-                              onPressed: () => Get.toNamed(Routes.ADMIN_SERVICE_FORM, arguments: service),
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                IconButton(
+                                  padding: EdgeInsets.zero,
+                                  constraints: const BoxConstraints(),
+                                  icon: const Icon(Icons.edit, color: Colors.grey, size: 20),
+                                  onPressed: () => Get.toNamed(Routes.ADMIN_SERVICE_FORM, arguments: service),
+                                ),
+                                const SizedBox(width: 8),
+                                IconButton(
+                                  padding: EdgeInsets.zero,
+                                  constraints: const BoxConstraints(),
+                                  icon: const Icon(Icons.delete, color: Colors.red, size: 20),
+                                  onPressed: () => _confirmDelete(Get.context!, service),
+                                ),
+                              ],
                             ),
                           ],
                         ),
@@ -165,11 +196,31 @@ class AdminServicesView extends GetView<AdminServicesController> {
           },
         );
       }),
-      floatingActionButton: FloatingActionButton(
-        backgroundColor: const Color(0xFF0058BC),
-        onPressed: () => Get.toNamed(Routes.ADMIN_SERVICE_FORM),
-        child: const Icon(Icons.add, color: Colors.white),
-      ),
+    );
+  }
+
+  void _confirmDelete(BuildContext context, ServiceModel service) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Hapus Layanan'),
+          content: Text('Apakah Anda yakin ingin menghapus layanan "${service.name}"?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Batal', style: TextStyle(color: Colors.grey)),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+                controller.deleteService(service.id);
+              },
+              child: const Text('Hapus', style: TextStyle(color: Colors.red)),
+            ),
+          ],
+        );
+      },
     );
   }
 }

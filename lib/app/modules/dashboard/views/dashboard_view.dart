@@ -14,11 +14,11 @@ class DashboardView extends GetView<DashboardController> {
     return Scaffold(
       body: Obx(() => IndexedStack(
         index: controller.tabIndex.value,
-        children: const [
-          HomeView(),
-          OrderTrackingView(),
-          CartView(),
-          ProfileView(),
+        children: [
+          const HomeView(),
+          controller.visitedTabs.contains(1) ? const OrderTrackingView() : const SizedBox.shrink(),
+          controller.visitedTabs.contains(2) ? const CartView() : const SizedBox.shrink(),
+          controller.visitedTabs.contains(3) ? const ProfileView() : const SizedBox.shrink(),
         ],
       )),
       bottomNavigationBar: _buildBottomNav(),

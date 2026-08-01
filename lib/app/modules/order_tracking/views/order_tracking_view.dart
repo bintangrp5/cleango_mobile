@@ -10,7 +10,7 @@ class OrderTrackingView extends GetView<OrderTrackingController> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FF),
-      appBar: _buildAppBar(),
+      appBar: _buildAppBar(context),
       body: SafeArea(
         child: Obx(() {
           if (controller.isLoading.value) {
@@ -21,18 +21,41 @@ class OrderTrackingView extends GetView<OrderTrackingController> {
             return const Center(child: Text('Belum ada pesanan aktif.'));
           }
 
-          return SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(vertical: 16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildHeroSection(),
-                const SizedBox(height: 24),
-                _buildStepper(),
-                const SizedBox(height: 24),
-                _buildOrderDetailsAccordion(),
-                const SizedBox(height: 32),
-              ],
+          return RefreshIndicator(
+            onRefresh: controller.fetchLatestOrder,
+            child: SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildHeroSection(),
+                  const SizedBox(height: 24),
+                  _buildStepper(),
+                  const SizedBox(height: 24),
+                  _buildOrderDetailsAccordion(),
+                  const SizedBox(height: 32),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: () => Get.offAllNamed('/dashboard', arguments: {'tab': 0}),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.white,
+                          foregroundColor: const Color(0xFF0058BC),
+                          side: const BorderSide(color: Color(0xFF0058BC)),
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          elevation: 0,
+                        ),
+                        child: const Text('Kembali ke Beranda', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 32),
+                ],
+              ),
             ),
           );
         }),
@@ -40,7 +63,7 @@ class OrderTrackingView extends GetView<OrderTrackingController> {
     );
   }
 
-  PreferredSizeWidget _buildAppBar() {
+  PreferredSizeWidget _buildAppBar(BuildContext context) {
     return AppBar(
       backgroundColor: const Color(0xFFF8F9FF).withValues(alpha: 0.9),
       elevation: 0,
@@ -53,11 +76,10 @@ class OrderTrackingView extends GetView<OrderTrackingController> {
         ),
       ),
       centerTitle: true,
-      leadingWidth: 80,
-      leading: Obx(() => Row(
-        children: [
-          const BackButton(color: Color(0xFF0B1C30)),
-          CircleAvatar(
+      actions: [
+        Obx(() => Padding(
+          padding: const EdgeInsets.only(right: 20.0),
+          child: CircleAvatar(
             radius: 16,
             backgroundColor: const Color(0xFF0058BC),
             child: Text(
@@ -65,9 +87,8 @@ class OrderTrackingView extends GetView<OrderTrackingController> {
               style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
             ),
           ),
-        ],
-      )),
-      actions: const [],
+        )),
+      ],
     );
   }
 
@@ -88,26 +109,26 @@ class OrderTrackingView extends GetView<OrderTrackingController> {
                 ),
               ),
               const SizedBox(width: 8),
-              const Text(
-                'PESANAN DIPROSES',
-                style: TextStyle(
+              Obx(() => Text(
+                controller.heroTitle,
+                style: const TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.bold,
                   letterSpacing: 1.2,
                   color: Color(0xFF0058BC),
                 ),
-              ),
+              )),
             ],
           ),
           const SizedBox(height: 12),
-          const Text(
-            'Pakaian bersihmu sedang diproses',
-            style: TextStyle(
+          Obx(() => Text(
+            controller.heroSubtitle,
+            style: const TextStyle(
               fontSize: 24,
               fontWeight: FontWeight.bold,
               color: Color(0xFF0B1C30),
             ),
-          ),
+          )),
           const SizedBox(height: 8),
           Text(
             'Status saat ini: ${controller.order.value!.status}',
@@ -149,14 +170,14 @@ class OrderTrackingView extends GetView<OrderTrackingController> {
                 child: Container(color: const Color(0xFFC1C6D7)),
               ),
               // Active Progress Line
-              Positioned(
+              Obx(() => Positioned(
                 left: 15,
                 top: 16,
-                bottom: 100, // Roughly matching step 2 (Processing)
+                bottom: 16 + (4 - controller.currentStep.value) * 56.0,
                 width: 2,
                 child: Container(color: const Color(0xFF0058BC)),
-              ),
-              Column(
+              )),
+              Obx(() => Column(
                 children: [
                   _buildStep(
                     icon: Icons.check,
@@ -194,11 +215,11 @@ class OrderTrackingView extends GetView<OrderTrackingController> {
                     icon: Icons.task_alt,
                     title: 'Selesai',
                     subtitle: 'Pesanan telah diterima',
-                    isActive: controller.currentStep.value == 4,
-                    isCompleted: controller.currentStep.value > 4,
+                    isActive: false,
+                    isCompleted: controller.currentStep.value >= 4,
                   ),
                 ],
-              ),
+              )),
             ],
           ),
         ),
@@ -284,8 +305,14 @@ class OrderTrackingView extends GetView<OrderTrackingController> {
           color: const Color(0xFFEFF4FF),
           borderRadius: BorderRadius.circular(16),
         ),
-        child: Row(
+        child: Column(
           children: [
+            GestureDetector(
+              onTap: () => controller.toggleAccordion(),
+              child: Container(
+                color: Colors.transparent,
+                child: Row(
+                  children: [
             Container(
               width: 40,
               height: 40,
@@ -301,7 +328,7 @@ class OrderTrackingView extends GetView<OrderTrackingController> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Pesanan #${controller.order.value!.orderNumber}',
+                    'Pesanan ${controller.order.value!.orderNumber}',
                     style: const TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.bold,
@@ -319,7 +346,42 @@ class OrderTrackingView extends GetView<OrderTrackingController> {
                 ],
               ),
             ),
-            const Icon(Icons.chevron_right, color: Color(0xFF717786)),
+            Obx(() => Icon(
+              controller.isAccordionExpanded.value ? Icons.expand_more : Icons.chevron_right,
+              color: const Color(0xFF717786),
+            )),
+          ],
+        ),
+      ),
+    ),
+            Obx(() {
+              if (controller.isAccordionExpanded.value) {
+                return Padding(
+                  padding: const EdgeInsets.only(top: 16),
+                  child: Column(
+                    children: controller.order.value!.items.map((item) {
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 8),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              '${item.serviceName} (${item.weightKg} kg)',
+                              style: const TextStyle(fontSize: 14, color: Color(0xFF414755)),
+                            ),
+                            Text(
+                              NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0).format(item.subtotal),
+                              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Color(0xFF0B1C30)),
+                            ),
+                          ],
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                );
+              }
+              return const SizedBox.shrink();
+            }),
           ],
         ),
       ),

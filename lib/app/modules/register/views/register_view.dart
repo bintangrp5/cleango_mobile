@@ -17,14 +17,27 @@ class RegisterView extends GetView<RegisterController> {
             children: [
               // Logo Section
               const SizedBox(height: 16),
-              Image.asset(
-                'assets/images/logo.png',
+              Container(
+                width: 80,
                 height: 80,
-                fit: BoxFit.contain,
-                errorBuilder: (context, error, stackTrace) => const Icon(
-                  Icons.local_laundry_service,
-                  size: 80,
-                  color: Color(0xFF0058BC),
+                decoration: const BoxDecoration(
+                  color: Colors.white,
+                  shape: BoxShape.circle,
+                ),
+                clipBehavior: Clip.antiAlias,
+                child: Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(10.0),
+                    child: Image.asset(
+                      'assets/images/logo.png',
+                      fit: BoxFit.contain,
+                      errorBuilder: (context, error, stackTrace) => const Icon(
+                        Icons.local_laundry_service,
+                        size: 40,
+                        color: Color(0xFF0058BC),
+                      ),
+                    ),
+                  ),
                 ),
               ),
               const SizedBox(height: 24),

@@ -50,11 +50,10 @@ class CheckoutView extends GetView<CheckoutController> {
         ),
       ),
       centerTitle: true,
-      leadingWidth: 80,
-      leading: Obx(() => Row(
-        children: [
-          const BackButton(color: Color(0xFF0B1C30)),
-          CircleAvatar(
+      actions: [
+        Obx(() => Padding(
+          padding: const EdgeInsets.only(right: 20.0),
+          child: CircleAvatar(
             radius: 16,
             backgroundColor: const Color(0xFF0058BC),
             child: Text(
@@ -62,9 +61,8 @@ class CheckoutView extends GetView<CheckoutController> {
               style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
             ),
           ),
-        ],
-      )),
-      actions: const [],
+        )),
+      ],
     );
   }
 

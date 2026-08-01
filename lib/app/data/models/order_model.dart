@@ -35,6 +35,9 @@ class OrderModel {
   final DateTime createdAt;
   final List<OrderItemModel> items;
 
+  final double? latitude;
+  final double? longitude;
+
   OrderModel({
     required this.id,
     required this.orderNumber,
@@ -45,6 +48,8 @@ class OrderModel {
     required this.status,
     required this.createdAt,
     required this.items,
+    this.latitude,
+    this.longitude,
   });
 
   factory OrderModel.fromJson(Map<String, dynamic> json) {
@@ -57,6 +62,8 @@ class OrderModel {
       totalPrice: (json['total_price'] as num?)?.toDouble() ?? 0.0,
       status: json['status'] ?? 'Baru',
       createdAt: json['created_at'] != null ? DateTime.parse(json['created_at']) : DateTime.now(),
+      latitude: (json['latitude'] as num?)?.toDouble(),
+      longitude: (json['longitude'] as num?)?.toDouble(),
       items: (json['order_items'] as List<dynamic>?)
               ?.map((e) => OrderItemModel.fromJson(e))
               .toList() ??

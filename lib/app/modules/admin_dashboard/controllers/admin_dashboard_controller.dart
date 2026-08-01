@@ -71,7 +71,7 @@ class AdminDashboardController extends GetxController {
   }
   
   void _calculateStats() {
-    activeTasks.value = orders.where((o) => o.status != 'Selesai' && o.status != 'Dibatalkan').length;
+    activeTasks.value = orders.where((o) => o.status != 'Selesai').length;
     completedTasks.value = orders.where((o) => o.status == 'Selesai').length;
     
     double revenue = 0;
@@ -85,9 +85,7 @@ class AdminDashboardController extends GetxController {
     };
     
     for (var order in orders) {
-      if (order.status == 'Selesai') {
-        revenue += order.totalPrice;
-      }
+      revenue += order.totalPrice;
       
       statusCount[order.status] = (statusCount[order.status] ?? 0) + 1;
       
@@ -121,8 +119,30 @@ class AdminDashboardController extends GetxController {
 
   Future<void> updateOrderStatus(String orderId, String newStatus) async {
     final user = authService.currentUser.value;
-
     if (user == null || user.role != 'admin') return;
+
+    final index = orders.indexWhere((o) => o.id == orderId);
+    if (index == -1) return;
+    
+    final orderNumber = orders[index].orderNumber;
+    final oldStatus = orders[index].status;
+    
+    // Optimistic update
+    orders[index] = OrderModel(
+      id: orders[index].id,
+      orderNumber: orders[index].orderNumber,
+      customerName: orders[index].customerName,
+      phoneNumber: orders[index].phoneNumber,
+      address: orders[index].address,
+      totalPrice: orders[index].totalPrice,
+      status: newStatus,
+      createdAt: orders[index].createdAt,
+      latitude: orders[index].latitude,
+      longitude: orders[index].longitude,
+      items: orders[index].items,
+    );
+    orders.refresh();
+    _calculateStats();
 
     try {
       final response = await authService.dio.patch(
@@ -131,12 +151,43 @@ class AdminDashboardController extends GetxController {
       );
 
       if (response.statusCode == 200) {
-        AppSnackbar.show('Sukses', 'Status pesanan #$orderId diperbarui menjadi $newStatus');
-        fetchAllOrders(); // Reload orders
+        AppSnackbar.show('Sukses', 'Status pesanan #$orderNumber diperbarui menjadi $newStatus');
       } else {
+        // Revert
+        orders[index] = OrderModel(
+          id: orders[index].id,
+          orderNumber: orders[index].orderNumber,
+          customerName: orders[index].customerName,
+          phoneNumber: orders[index].phoneNumber,
+          address: orders[index].address,
+          totalPrice: orders[index].totalPrice,
+          status: oldStatus,
+          createdAt: orders[index].createdAt,
+          latitude: orders[index].latitude,
+          longitude: orders[index].longitude,
+          items: orders[index].items,
+        );
+        orders.refresh();
+        _calculateStats();
         AppSnackbar.show('Error', 'Gagal memperbarui status');
       }
     } on DioException {
+      // Revert
+      orders[index] = OrderModel(
+        id: orders[index].id,
+        orderNumber: orders[index].orderNumber,
+        customerName: orders[index].customerName,
+        phoneNumber: orders[index].phoneNumber,
+        address: orders[index].address,
+        totalPrice: orders[index].totalPrice,
+        status: oldStatus,
+        createdAt: orders[index].createdAt,
+        latitude: orders[index].latitude,
+        longitude: orders[index].longitude,
+        items: orders[index].items,
+      );
+      orders.refresh();
+      _calculateStats();
       AppSnackbar.show('Error', 'Kesalahan jaringan saat update status');
     }
   }

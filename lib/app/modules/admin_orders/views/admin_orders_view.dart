@@ -3,6 +3,8 @@ import 'package:get/get.dart';
 import '../controllers/admin_orders_controller.dart';
 import '../../../data/models/order_model.dart';
 import 'package:intl/intl.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart' as latlong;
 import '../../../widgets/admin_drawer.dart';
 
 class AdminOrdersView extends GetView<AdminOrdersController> {
@@ -117,7 +119,9 @@ class AdminOrdersView extends GetView<AdminOrdersController> {
   }
 
   Widget _buildOrderCard(OrderModel order) {
-    return Container(
+    return GestureDetector(
+      onTap: () => _showOrderDetailsDialog(Get.context!, order),
+      child: Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -149,9 +153,88 @@ class AdminOrdersView extends GetView<AdminOrdersController> {
             ],
           ),
           const SizedBox(height: 8),
-          Text(order.address, style: const TextStyle(fontSize: 12, color: Colors.grey), maxLines: 2, overflow: TextOverflow.ellipsis),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Icon(Icons.location_on, size: 16, color: Colors.grey),
+              const SizedBox(width: 4),
+              Expanded(
+                child: Text(order.address, style: const TextStyle(fontSize: 12, color: Colors.grey), maxLines: 2, overflow: TextOverflow.ellipsis),
+              ),
+              if (order.latitude != null && order.longitude != null)
+                IconButton(
+                  icon: const Icon(Icons.map, color: Color(0xFF0058BC)),
+                  onPressed: () => _showMapDialog(Get.context!, order),
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                ),
+            ],
+          ),
         ],
       ),
+      ),
+    );
+  }
+
+  void _showMapDialog(BuildContext context, OrderModel order) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          child: Container(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text('Lokasi: ${order.customerName}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                const SizedBox(height: 16),
+                SizedBox(
+                  height: 300,
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: FlutterMap(
+                      options: MapOptions(
+                        initialCenter: latlong.LatLng(order.latitude!, order.longitude!),
+                        initialZoom: 16.0,
+                      ),
+                      children: [
+                        TileLayer(
+                          urlTemplate: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png',
+                          subdomains: const ['a', 'b', 'c', 'd'],
+                          userAgentPackageName: 'com.example.cleango_mobile',
+                        ),
+                        MarkerLayer(
+                          markers: [
+                            Marker(
+                              point: latlong.LatLng(order.latitude!, order.longitude!),
+                              width: 40,
+                              height: 40,
+                              child: const Icon(Icons.location_on, color: Colors.red, size: 40),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Text(order.address, style: const TextStyle(fontSize: 12, color: Colors.grey), textAlign: TextAlign.center),
+                const SizedBox(height: 16),
+                ElevatedButton(
+                  onPressed: () => Navigator.pop(context),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF0058BC),
+                    foregroundColor: Colors.white,
+                    minimumSize: const Size(double.infinity, 44)
+                  ),
+                  child: const Text('Tutup'),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -184,6 +267,83 @@ class AdminOrdersView extends GetView<AdminOrdersController> {
           }).toList(),
         ),
       ),
+    );
+  }
+
+  void _showOrderDetailsDialog(BuildContext context, OrderModel order) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          child: Container(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Rincian Pesanan #${order.orderNumber}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                const SizedBox(height: 8),
+                Text('Pelanggan: ${order.customerName}', style: const TextStyle(fontSize: 14)),
+                Text('No HP: ${order.phoneNumber}', style: const TextStyle(fontSize: 14)),
+                const Divider(height: 24),
+                const Text('Layanan:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                const SizedBox(height: 8),
+                ...order.items.map((item) => Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              '${item.serviceName} (${item.weightKg} kg)', 
+                              style: const TextStyle(fontSize: 14),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            Text(
+                              '${NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0).format(item.pricePerKg)} / kg', 
+                              style: const TextStyle(fontSize: 12, color: Colors.grey),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Text(
+                        NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0).format(item.subtotal), 
+                        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold)
+                      ),
+                    ],
+                  ),
+                )),
+                const Divider(height: 24),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text('Total Pembayaran', style: TextStyle(fontWeight: FontWeight.bold)),
+                    Text(
+                      NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0).format(order.totalPrice), 
+                      style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.green)
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 24),
+                ElevatedButton(
+                  onPressed: () => Navigator.pop(context),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF0058BC),
+                    foregroundColor: Colors.white,
+                    minimumSize: const Size(double.infinity, 44)
+                  ),
+                  child: const Text('Tutup'),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 }

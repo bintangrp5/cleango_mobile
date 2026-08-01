@@ -13,6 +13,8 @@ class AdminServiceFormController extends GetxController {
   final priceController = TextEditingController();
   final durationController = TextEditingController();
   final imageController = TextEditingController();
+  final selectedCategory = 'Reguler'.obs;
+  final categories = ['Reguler', 'Ekspres', 'Setrika Saja', 'Premium'];
 
   final isLoading = false.obs;
   late AuthService authService;
@@ -36,6 +38,10 @@ class AdminServiceFormController extends GetxController {
       priceController.text = serviceToEdit!.pricePerKg.toString();
       durationController.text = serviceToEdit!.estimatedDuration.toString();
       imageController.text = serviceToEdit!.imageUrl ?? '';
+      
+      if (categories.contains(serviceToEdit!.category)) {
+        selectedCategory.value = serviceToEdit!.category;
+      }
     }
   }
 
@@ -76,6 +82,7 @@ class AdminServiceFormController extends GetxController {
         "description": descController.text,
         "price_per_kg": double.parse(priceController.text),
         "estimated_duration": durationController.text.isNotEmpty ? durationController.text : "24",
+        "category": selectedCategory.value,
         "image_url": finalImageUrl.isNotEmpty ? finalImageUrl : "https://placehold.co/100",
       };
 

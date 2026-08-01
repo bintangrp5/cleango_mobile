@@ -17,14 +17,27 @@ class LoginView extends GetView<LoginController> {
             children: [
               // Logo Section
               const SizedBox(height: 32),
-              Image.asset(
-                'assets/images/logo.png',
+              Container(
+                width: 100,
                 height: 100,
-                fit: BoxFit.contain,
-                errorBuilder: (context, error, stackTrace) => const Icon(
-                  Icons.local_laundry_service,
-                  size: 100,
-                  color: Color(0xFF0058BC),
+                decoration: const BoxDecoration(
+                  color: Colors.white,
+                  shape: BoxShape.circle,
+                ),
+                clipBehavior: Clip.antiAlias,
+                child: Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(12.0),
+                    child: Image.asset(
+                      'assets/images/logo.png',
+                      fit: BoxFit.contain,
+                      errorBuilder: (context, error, stackTrace) => const Icon(
+                        Icons.local_laundry_service,
+                        size: 50,
+                        color: Color(0xFF0058BC),
+                      ),
+                    ),
+                  ),
                 ),
               ),
               const SizedBox(height: 32),
