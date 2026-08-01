@@ -19,7 +19,7 @@ class AdminUsersView extends GetView<AdminUsersController> {
         shadowColor: Colors.black12,
         iconTheme: const IconThemeData(color: Color(0xFF0058BC)),
         title: const Text(
-          'Kelola Pengguna',
+          'Data Pengguna',
           style: TextStyle(
             fontSize: 20,
             fontWeight: FontWeight.bold,

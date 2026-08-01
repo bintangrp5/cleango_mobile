@@ -46,7 +46,7 @@ class AdminDrawer extends StatelessWidget {
           ),
           _buildDrawerItem(
             icon: Icons.people,
-            title: 'Kelola Pengguna',
+            title: 'Data Pengguna',
             route: Routes.ADMIN_USERS,
           ),
           _buildDrawerItem(
